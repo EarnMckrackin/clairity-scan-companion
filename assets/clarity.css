@@ -266,6 +266,8 @@ button {
 
 .score-orb {
   display: grid;
+  width: min(100%, 300px);
+  justify-self: center;
   aspect-ratio: 1;
   place-items: center;
   border-radius: 50%;
@@ -914,6 +916,10 @@ button {
     grid-template-columns: 1fr;
   }
 
+  .scan-stage.enhanced {
+    grid-template-columns: 1fr;
+  }
+
   .sidebar {
     position: static;
   }
@@ -927,6 +933,29 @@ button {
   .brand-row {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .app-frame {
+    width: min(100% - 20px, 1240px);
+    padding-top: 14px;
+  }
+
+  .scan-stage {
+    padding: 14px;
+    border-radius: 18px;
+  }
+
+  .hero-copy h1 {
+    font-size: clamp(34px, 12vw, 48px);
+    line-height: 1;
+  }
+
+  .score-orb {
+    width: min(74vw, 240px);
+  }
+
+  .score-orb strong {
+    font-size: clamp(48px, 18vw, 78px);
   }
 
   .url-scan {
