@@ -3,71 +3,10 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>clAIrity Page Scan</title>
-    <link rel="icon" href="data:," />
-    <link rel="stylesheet" href="../assets/clarity.css" />
+    <title>clAIrity Floating Companion</title>
+    <meta http-equiv="refresh" content="0; url=floating-companion.html" />
   </head>
   <body>
-    <main class="browser-window">
-      <div class="browser-bar">
-        <span class="traffic" aria-hidden="true"></span>
-        <span class="address">social.example/post/news-image</span>
-      </div>
-      <section class="article-page">
-        <article>
-          <p class="pill">Right-click scan flow</p>
-          <h1 class="page-title">A scan that starts where the question happens.</h1>
-          <p class="page-intro">The selected post stays visible while clAIrity checks source, media, and context signals in a side panel.</p>
-          <div class="fake-media">
-            <span class="warning-chip" id="selectionChip">Selected image · scan ready</span>
-          </div>
-        </article>
-
-        <aside class="module">
-          <div class="brand-lockup mini-brand" aria-label="clAIrity">
-            <img class="brand-logo" src="../assets/clairity-logo.svg" alt="" />
-            <span class="wordmark">cl<span class="word-ai">AI</span>rity</span>
-          </div>
-          <div class="score-status">
-            <h2 id="scanPanelTitle">Page scan</h2>
-            <span class="status-badge" id="scanBadge">Ready</span>
-          </div>
-          <p class="pill" id="scanProgressText">Checking image, caption, page source</p>
-          <div class="progress-rail stack-gap"><span class="progress-fill" id="progressFill"></span></div>
-          <div class="signal-list">
-            <div class="signal"><span class="signal-dot">1</span><p id="sourceSignal">Looking for original source</p></div>
-            <div class="signal"><span class="signal-dot">2</span><p id="mediaSignal">Checking visual edit clues</p></div>
-            <div class="signal"><span class="signal-dot">3</span><p id="contextSignal">Comparing page context</p></div>
-          </div>
-          <button class="primary-btn full-width stack-gap" id="finishScan" type="button">Finish scan</button>
-          <button class="secondary-btn full-width stack-gap" id="saveSelection" type="button">Save selection</button>
-        </aside>
-      </section>
-    </main>
-
-    <script>
-      const finish = document.querySelector('#finishScan');
-      const save = document.querySelector('#saveSelection');
-      const progress = document.querySelector('#progressFill');
-      const badge = document.querySelector('#scanBadge');
-      const title = document.querySelector('#scanPanelTitle');
-      const progressText = document.querySelector('#scanProgressText');
-
-      finish.addEventListener('click', () => {
-        progress.style.width = '100%';
-        badge.textContent = '74';
-        title.textContent = 'Use care';
-        progressText.textContent = 'Scan complete · 3 clues found';
-        document.querySelector('#sourceSignal').textContent = 'No trusted original source nearby';
-        document.querySelector('#mediaSignal').textContent = 'Texture looks softened around the subject';
-        document.querySelector('#contextSignal').textContent = 'Caption changed across reposts';
-        finish.textContent = 'Open full explanation';
-      });
-
-      save.addEventListener('click', () => {
-        save.textContent = 'Selection saved';
-        document.querySelector('#selectionChip').textContent = 'Selected image · saved to history';
-      });
-    </script>
+    <p><a href="floating-companion.html">Open floating companion</a></p>
   </body>
 </html>

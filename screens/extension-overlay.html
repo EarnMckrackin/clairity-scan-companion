@@ -3,82 +3,10 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>clAIrity Overlay Warning</title>
-    <link rel="icon" href="data:," />
-    <link rel="stylesheet" href="../assets/clarity.css" />
+    <title>clAIrity Floating Companion</title>
+    <meta http-equiv="refresh" content="0; url=floating-companion.html" />
   </head>
   <body>
-    <main class="browser-window">
-      <div class="browser-bar">
-        <span class="traffic" aria-hidden="true"></span>
-        <span class="address">news-feed.example/story</span>
-      </div>
-      <section class="article-page">
-        <article>
-          <p class="pill">On-page warning overlay</p>
-          <h1 class="page-title">A gentle warning near the media, not a scary interruption.</h1>
-          <p class="page-intro">The overlay keeps the original page visible, explains what clAIrity noticed, and lets people dismiss or save the result.</p>
-          <div class="fake-media">
-            <aside class="overlay-card" id="overlayNotice">
-              <div class="brand-lockup mini-brand" aria-label="clAIrity">
-                <img class="brand-logo" src="../assets/clairity-logo.svg" alt="" />
-                <span class="wordmark">cl<span class="word-ai">AI</span>rity</span>
-              </div>
-              <div class="score-status">
-                <h2>Use care with this image</h2>
-                <span class="status-badge">74</span>
-              </div>
-              <p id="overlayCopy">The source is unclear and the image has signs of possible editing. Check before sharing.</p>
-              <div class="overlay-actions">
-                <button class="primary-btn" id="readExplanation" type="button">Read explanation</button>
-                <button class="secondary-btn" id="dismissOverlay" type="button">Hide</button>
-              </div>
-            </aside>
-          </div>
-        </article>
-
-        <aside class="module">
-          <h2>Controls</h2>
-          <p id="controlMessage">People can hide the notice, learn why it appeared, or save the scan to review later.</p>
-          <div class="signal-list">
-            <button class="secondary-btn" id="hidePage" type="button">Hide for this page</button>
-            <button class="secondary-btn" id="saveHistory" type="button">Save to history</button>
-            <button class="quiet-btn" id="kidTip" type="button">Show kid-friendly tip</button>
-          </div>
-        </aside>
-      </section>
-    </main>
-
-    <script>
-      const overlay = document.querySelector('#overlayNotice');
-      const message = document.querySelector('#controlMessage');
-      const copy = document.querySelector('#overlayCopy');
-
-      document.querySelector('#readExplanation').addEventListener('click', () => {
-        copy.textContent = 'clAIrity noticed an unclear source and softened image texture. Look for the original post before sharing.';
-        message.textContent = 'The explanation opened in place so the page stays visible.';
-      });
-
-      document.querySelector('#dismissOverlay').addEventListener('click', () => {
-        overlay.classList.add('notice-hidden');
-        message.textContent = 'The notice is hidden for now. It can be restored from the extension popup.';
-      });
-
-      document.querySelector('#hidePage').addEventListener('click', () => {
-        overlay.classList.add('notice-hidden');
-        message.textContent = 'Hidden for this page.';
-      });
-
-      document.querySelector('#saveHistory').addEventListener('click', (event) => {
-        event.currentTarget.textContent = 'Saved';
-        message.textContent = 'Saved to scan history with the explanation and next step.';
-      });
-
-      document.querySelector('#kidTip').addEventListener('click', () => {
-        copy.textContent = 'Pause before sharing. Ask: who made this, where did it start, and can I find it on a trusted site?';
-        message.textContent = 'Kid-friendly tip shown in the overlay.';
-        overlay.classList.remove('notice-hidden');
-      });
-    </script>
+    <p><a href="floating-companion.html">Open floating companion</a></p>
   </body>
 </html>

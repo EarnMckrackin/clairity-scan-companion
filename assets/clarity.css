@@ -616,6 +616,19 @@ button {
   line-height: 1.45;
 }
 
+.bookmarklet-box {
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: 10px;
+  align-items: center;
+  width: min(680px, 100%);
+}
+
+.bookmarklet-box .fine-print {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
 .fine-print {
   font-size: 13px;
   line-height: 1.45;
@@ -1001,6 +1014,7 @@ button {
   }
 
   .screen-links,
+  .bookmarklet-box,
   .overlay-actions,
   .popup-actions {
     grid-template-columns: 1fr;

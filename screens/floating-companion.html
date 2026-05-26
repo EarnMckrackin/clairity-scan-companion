@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>clAIrity Floating Companion</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="../assets/clarity.css" />
+  </head>
+  <body>
+    <main class="app-frame">
+      <header class="brand-row">
+        <div class="brand-lockup" aria-label="clAIrity">
+          <img class="brand-logo" src="../assets/clairity-logo.svg" alt="" />
+          <span class="wordmark">cl<span class="word-ai">AI</span>rity</span>
+        </div>
+        <nav class="screen-links" aria-label="clAIrity screens">
+          <a class="screen-link" href="web-scan.html">Scan</a>
+          <a class="screen-link" href="scan-history.html">History</a>
+          <a class="screen-link" href="settings-privacy.html">Privacy</a>
+          <a class="screen-link active" href="floating-companion.html">Floating companion</a>
+        </nav>
+      </header>
+
+      <section class="scan-stage enhanced" aria-labelledby="float-title">
+        <div class="hero-copy">
+          <p class="pill">Browse with clAIrity</p>
+          <h1 id="float-title">A floating scanner that travels with the page.</h1>
+          <p>
+            Add the companion to your bookmarks bar. On any article or social post,
+            click it to open a draggable clAIrity panel that scans the current page,
+            selected text, or the page URL.
+          </p>
+
+          <div class="bookmarklet-box stack-gap">
+            <a class="primary-btn" id="bookmarkletLink" href="#">clAIrity floating scan</a>
+            <button class="secondary-btn" id="copyBookmarklet" type="button">Copy bookmarklet</button>
+            <p class="fine-print" id="bookmarkletStatus">
+              Drag the dark button to your bookmarks bar, or copy it and create a browser bookmark manually.
+            </p>
+          </div>
+        </div>
+
+        <aside class="score-panel">
+          <div class="score-orb"><strong>↗</strong></div>
+          <div>
+            <h2>No extension required</h2>
+            <p>
+              The floating companion is a bookmarklet. It injects a temporary panel
+              into the current page and sends only page text/URL snippets to clAIrity.
+            </p>
+          </div>
+          <button class="quiet-btn" id="launchHere" type="button">Try it on this page</button>
+        </aside>
+      </section>
+
+      <section class="evidence-grid stack-gap" aria-label="Floating companion capabilities">
+        <article class="module">
+          <h2>Scan current page</h2>
+          <p>The floating panel reads the page title, URL, and visible text snippet from the page you are on.</p>
+        </article>
+        <article class="module">
+          <h2>Scan selected text</h2>
+          <p>Select a suspicious claim, open the panel, and scan only that text.</p>
+        </article>
+        <article class="module">
+          <h2>Temporary by design</h2>
+          <p>Close the panel and it disappears. Scan history remains local to your browser when enabled.</p>
+        </article>
+      </section>
+    </main>
+
+    <script type="module" src="../assets/floating-install.js"></script>
+  </body>
+</html>

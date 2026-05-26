@@ -74,9 +74,7 @@
     "screens/web-scan.html",
     "screens/scan-history.html",
     "screens/settings-privacy.html",
-    "screens/extension-popup.html",
-    "screens/extension-page-scan.html",
-    "screens/extension-overlay.html"
+    "screens/floating-companion.html"
   ],
   "provenance": {
     "dataSource": "Local sample scan dataset",

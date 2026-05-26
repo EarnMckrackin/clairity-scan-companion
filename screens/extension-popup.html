@@ -3,63 +3,10 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>clAIrity Extension Popup</title>
-    <link rel="icon" href="data:," />
-    <link rel="stylesheet" href="../assets/clarity.css" />
+    <title>clAIrity Floating Companion</title>
+    <meta http-equiv="refresh" content="0; url=floating-companion.html" />
   </head>
   <body>
-    <main class="extension-shell">
-      <section class="extension-card" aria-label="Browser extension scan result">
-        <header class="brand-row">
-          <div class="brand-lockup" aria-label="clAIrity">
-            <img class="brand-logo" src="../assets/clairity-logo.svg" alt="" />
-            <span class="wordmark">cl<span class="word-ai">AI</span>rity</span>
-          </div>
-          <span class="pill" id="popupState">Page scan</span>
-        </header>
-
-        <div class="score-orb" aria-label="Safety score 74"><strong>74</strong></div>
-        <div class="score-status">
-          <h1>Use care before sharing</h1>
-          <span class="status-badge">3 clues</span>
-        </div>
-        <p id="popupSummary">This post has a few clues that deserve a second look. We found no trusted original source nearby.</p>
-
-        <div class="signal-list">
-          <div class="signal"><span class="signal-dot">?</span><p>Caption changed across reposts.</p></div>
-          <div class="signal"><span class="signal-dot">i</span><p>Image texture looks softened around the main subject.</p></div>
-          <div class="signal"><span class="signal-dot">✓</span><p>No dangerous link behavior was found on this page.</p></div>
-        </div>
-
-        <div class="popup-actions stack-gap">
-          <button class="primary-btn" id="fullExplanation" type="button">Show explanation</button>
-          <button class="secondary-btn" id="saveScan" type="button">Save scan</button>
-          <button class="secondary-btn" id="copyResult" type="button">Copy summary</button>
-          <a class="quiet-btn" href="extension-page-scan.html">Scan selection</a>
-        </div>
-        <p class="pill full-width stack-gap" id="nextStep">Suggested next step: search for the original image</p>
-      </section>
-    </main>
-
-    <script>
-      const popupState = document.querySelector('#popupState');
-      const nextStep = document.querySelector('#nextStep');
-      const summary = document.querySelector('#popupSummary');
-
-      document.querySelector('#fullExplanation').addEventListener('click', () => {
-        nextStep.textContent = 'Why it appeared: source, texture, and repost clues need a second look.';
-        popupState.textContent = 'Explanation open';
-      });
-
-      document.querySelector('#saveScan').addEventListener('click', (event) => {
-        event.currentTarget.textContent = 'Saved';
-        popupState.textContent = 'Saved to history';
-      });
-
-      document.querySelector('#copyResult').addEventListener('click', async (event) => {
-        await navigator.clipboard?.writeText(`clAIrity says: use care. ${summary.textContent}`);
-        event.currentTarget.textContent = 'Copied';
-      });
-    </script>
+    <p><a href="floating-companion.html">Open floating companion</a></p>
   </body>
 </html>
