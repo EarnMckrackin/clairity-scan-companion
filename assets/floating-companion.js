@@ -583,7 +583,6 @@
       video.srcObject = stream;
       video.muted = true;
       video.playsInline = true;
-      await video.play();
       await new Promise((resolve) => {
         if (video.videoWidth && video.videoHeight) {
           resolve();
@@ -591,6 +590,19 @@
         }
         video.onloadedmetadata = resolve;
       });
+      await video.play().catch(() => {});
+      await new Promise((resolve) => {
+        if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
+          resolve();
+          return;
+        }
+        video.onloadeddata = resolve;
+      });
+      if (typeof video.requestVideoFrameCallback === 'function') {
+        await new Promise((resolve) => video.requestVideoFrameCallback(() => resolve()));
+      } else {
+        await new Promise((resolve) => window.requestAnimationFrame(() => resolve()));
+      }
 
       const maxSample = 1280;
       const scale = Math.min(maxSample / video.videoWidth, maxSample / video.videoHeight, 1);
