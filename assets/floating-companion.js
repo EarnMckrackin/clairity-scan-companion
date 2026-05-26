@@ -33,14 +33,14 @@
       <b data-score>--</b>
       <div>
         <h2 data-status>Ready</h2>
-        <p data-summary>Audit this page, selected text, or the page URL while you browse.</p>
+        <p data-summary>Check this page, selected text, or the page URL while you browse.</p>
       </div>
     </div>
     <div class="clairity-float-actions">
-      <button type="button" data-scan-page>Audit page text</button>
-      <button type="button" data-scan-selection>Audit selection</button>
-      <button type="button" data-scan-url>Audit URL</button>
-      <button type="button" data-capture-screen>Audit screen capture</button>
+      <button type="button" data-scan-page>Check page text</button>
+      <button type="button" data-scan-selection>Check selection</button>
+      <button type="button" data-scan-url>Check URL</button>
+      <button type="button" data-capture-screen>Check screen capture</button>
     </div>
     <div class="clairity-float-evidence" data-evidence></div>
   `;
@@ -211,7 +211,7 @@
   }
 
   function setBusy(label) {
-    root.querySelector('[data-status]').textContent = 'Auditing...';
+    root.querySelector('[data-status]').textContent = 'Checking...';
     root.querySelector('[data-summary]').textContent = label;
   }
 
@@ -226,8 +226,243 @@
 
   function renderError(error) {
     root.querySelector('[data-score]').textContent = '!';
-    root.querySelector('[data-status]').textContent = 'Could not audit';
+    root.querySelector('[data-status]').textContent = 'Could not check';
     root.querySelector('[data-summary]').textContent = error.message || 'Try again from the web app.';
+  }
+
+  function lower(value) {
+    return String(value || '').toLowerCase();
+  }
+
+  function clampScore(score) {
+    return Math.max(8, Math.min(96, Math.round(score)));
+  }
+
+  function statusFromScore(score) {
+    if (score >= 78) return { label: 'High anomaly', tone: 'concern' };
+    if (score >= 50) return { label: 'Review required', tone: 'care' };
+    return { label: 'Low anomaly', tone: 'ok' };
+  }
+
+  function evidence(category, label, weight, detail, sentiment = 'caution') {
+    return { category, label, weight, detail, sentiment };
+  }
+
+  function summarizeSignals(signals) {
+    if (!signals.length) {
+      return 'Verax did not find strong warning signs. Still check the source before sharing.';
+    }
+    const top = signals.slice(0, 2).map((item) => item.label.toLowerCase()).join(' and ');
+    return `Verax noticed ${top}. That does not prove AI editing, but it is worth checking before sharing.`;
+  }
+
+  function buildResult({ type, label, score, signals, nextStep, metadata = {} }) {
+    const normalizedSignals = signals.length
+      ? signals
+      : [evidence('Evidence', 'No strong warning signs found', 'Low', 'Verax did not find strong concern signals in this check.', 'supportive')];
+    const finalScore = clampScore(score);
+    const status = statusFromScore(finalScore);
+
+    return {
+      id: `floating_${Date.now()}_${Math.random().toString(16).slice(2)}`,
+      createdAt: new Date().toISOString(),
+      type,
+      label,
+      score: finalScore,
+      status: status.label,
+      tone: status.tone,
+      summary: summarizeSignals(normalizedSignals),
+      evidence: normalizedSignals.slice(0, 6),
+      nextStep,
+      metadata,
+      privacy: {
+        storedServerSide: false,
+        rawInputRetained: false
+      }
+    };
+  }
+
+  function detectUrgency(text) {
+    return /(share|forward|send).{0,20}(now|fast|before|urgent)|urgent|breaking|they don't want you to know|before it disappears|act now/i.test(text);
+  }
+
+  function detectSourceLanguage(text) {
+    return /(according to|reported by|source:|via |published|study|court|agency|official|press release|archive)/i.test(text);
+  }
+
+  function classifyHost(host) {
+    const normalized = lower(host).replace(/^www\./, '');
+    if (/w3schools\.com|developer\.mozilla\.org|docs\./.test(normalized)) return 'educational reference';
+    if (/wikipedia\.org|britannica\.com|khanacademy\.org/.test(normalized)) return 'reference';
+    if (/reddit\.com|x\.com|twitter\.com|tiktok\.com|instagram\.com|facebook\.com|threads\.net|youtube\.com/.test(normalized)) return 'social platform';
+    if (/\.gov$|\.edu$/.test(normalized)) return 'institutional';
+    if (/nytimes\.com|apnews\.com|reuters\.com|bbc\.com|npr\.org|theguardian\.com|washingtonpost\.com/.test(normalized)) return 'news';
+    return 'general website';
+  }
+
+  function localAnalyzeText(payload) {
+    const text = String(payload.content || '').trim();
+    const signals = [];
+    let score = 30;
+
+    if (!text) {
+      throw new Error('No text was available to check on this page.');
+    }
+
+    signals.push(evidence('Text', 'Text checked in your browser', 'Low', 'Verax checked the selected or visible text without sending the raw page anywhere.', 'supportive'));
+
+    if (text.length < 80) {
+      signals.push(evidence('Text', 'Very short text sample', 'Medium', 'Short samples can be harder to judge without more context.'));
+      score += 12;
+    }
+    if (detectUrgency(text)) {
+      signals.push(evidence('Text', 'Urgent sharing language', 'High', 'The text pushes for quick action or resharing, which is common in misleading posts.'));
+      score += 18;
+    }
+    if (/[A-Z]{6,}/.test(text) || (text.match(/[A-Z]/g) || []).length / Math.max(1, text.length) > 0.18) {
+      signals.push(evidence('Text', 'Shouty formatting', 'Medium', 'Heavy capitalization can be a sign that the post is trying to provoke a reaction.'));
+      score += 8;
+    }
+    if (detectSourceLanguage(text)) {
+      signals.push(evidence('Text', 'Source-style wording found', 'Low', 'The text includes language that points to a source, publication, or attribution.', 'supportive'));
+      score -= 10;
+    } else {
+      signals.push(evidence('Text', 'No clear source language', 'Medium', 'The visible text does not clearly point to a source, reporter, or original publisher.'));
+      score += 9;
+    }
+
+    return buildResult({
+      type: 'text',
+      label: 'Selected text',
+      score,
+      signals,
+      nextStep: 'Look for the same claim on a trusted source before sharing it.',
+      metadata: { sampleLength: text.length }
+    });
+  }
+
+  function localAnalyzeUrl(payload) {
+    const url = String(payload.url || location.href || '').trim();
+    const snapshot = payload.pageSnapshot || null;
+    const signals = [];
+    let score = 28;
+
+    if (!url) {
+      throw new Error('No page URL was available to check.');
+    }
+
+    let parsed;
+    try {
+      parsed = new URL(url);
+    } catch {
+      throw new Error('This page URL is not valid enough to check.');
+    }
+
+    const hostType = classifyHost(parsed.hostname);
+    signals.push(evidence('Source', `Host looks like ${hostType}`, 'Low', `Verax recognized ${parsed.hostname} as ${hostType}.`, hostType === 'news' || hostType === 'reference' || hostType === 'institutional' ? 'supportive' : 'caution'));
+
+    if (hostType === 'social platform') score += 14;
+    if (hostType === 'news' || hostType === 'reference' || hostType === 'institutional') score -= 12;
+
+    if (snapshot?.text) {
+      signals.push(evidence('Page', 'Visible page text checked', 'Low', 'Verax checked the visible page text already loaded in your browser.', 'supportive'));
+      if (detectUrgency(snapshot.text)) {
+        signals.push(evidence('Page', 'Urgent claim language', 'High', 'The visible page text pushes urgency or fast sharing.'));
+        score += 16;
+      }
+      if (detectSourceLanguage(snapshot.text)) {
+        signals.push(evidence('Page', 'Source details mentioned', 'Low', 'The page text includes source-style details or attribution.', 'supportive'));
+        score -= 8;
+      }
+      if ((snapshot.wordCount || 0) < 120) {
+        signals.push(evidence('Page', 'Thin page context', 'Medium', 'There is not much readable text on the page, so context is limited.'));
+        score += 8;
+      }
+      if ((snapshot.images || []).length > 0) {
+        signals.push(evidence('Page', 'Page includes media', 'Low', 'The page already contains image clues you can compare against the text.'));
+      }
+    } else {
+      signals.push(evidence('Page', 'URL-only check', 'Medium', 'Verax could only use the URL and page type here, not the visible text.'));
+      score += 10;
+    }
+
+    return buildResult({
+      type: 'url',
+      label: parsed.hostname,
+      score,
+      signals,
+      nextStep: hostType === 'social platform'
+        ? 'Open the original account or find a trusted report before sharing this post.'
+        : 'Compare this page with another trusted source before sharing it.',
+      metadata: {
+        url,
+        hostType,
+        pageSnapshot: snapshot ? {
+          title: snapshot.title,
+          wordCount: snapshot.wordCount,
+          imageCount: (snapshot.images || []).length
+        } : null
+      }
+    });
+  }
+
+  function localAnalyzeMedia(payload) {
+    const media = payload.media || {};
+    const visual = media.visualStats || {};
+    const signals = [];
+    let score = 34;
+
+    signals.push(evidence('Media', 'Screen image checked locally', 'Low', 'Verax checked the captured image in your browser without uploading the raw pixels.', 'supportive'));
+
+    if (media.width && media.height) {
+      signals.push(evidence('Media', 'Readable dimensions found', 'Low', `The capture reports ${media.width} x ${media.height}px dimensions.`, 'supportive'));
+      score -= 4;
+    }
+
+    if (typeof visual.edgeDensity === 'number' && typeof visual.smoothness === 'number') {
+      if (visual.smoothness > 0.52 && visual.edgeDensity < 0.105 && visual.luminanceStd < 44) {
+        signals.push(evidence('Media', 'Unusually smooth image texture', 'High', 'Large smooth areas with limited edge variation can appear in generated or heavily edited images.'));
+        score += 18;
+      } else if (visual.edgeDensity > 0.18 && visual.luminanceStd > 48) {
+        signals.push(evidence('Media', 'Natural detail variation', 'Low', 'The image has varied edges and texture instead of a uniformly smooth surface.', 'supportive'));
+        score -= 10;
+      }
+
+      if (visual.grayscaleRatio > 0.78 && visual.edgeDensity > 0.11) {
+        signals.push(evidence('Media', 'Monochrome photo texture', 'Low', 'The image reads more like a photographed or scanned monochrome scene than a flat synthetic render.', 'supportive'));
+        score -= 10;
+      }
+
+      if (visual.saturationMean > 0.36 && visual.highContrastDensity < 0.055) {
+        signals.push(evidence('Media', 'Polished color profile', 'Medium', 'High color saturation with limited hard contrast can be a sign of heavy editing or generated media.'));
+        score += 8;
+      }
+    }
+
+    if (/screenshot|screen/i.test(media.name || '')) {
+      signals.push(evidence('Media', 'Screenshot context', 'Medium', 'Screenshots often remove source and metadata, so origin checks still matter.'));
+      score += 4;
+    }
+
+    return buildResult({
+      type: 'image',
+      label: media.name || 'Captured image',
+      score,
+      signals,
+      nextStep: 'Look for the original post, file, or source before sharing this image.',
+      metadata: {
+        width: media.width,
+        height: media.height,
+        visualStats: visual
+      }
+    });
+  }
+
+  async function localRunScan(payload) {
+    const type = lower(payload.type || '');
+    if (type === 'image' || payload.media) return localAnalyzeMedia(payload);
+    if (type === 'url' || payload.url) return localAnalyzeUrl(payload);
+    return localAnalyzeText(payload);
   }
 
   function compactSnapshot(snapshot) {
@@ -255,10 +490,6 @@
     return compact;
   }
 
-  function strictHostRequiresApp() {
-    return /(^|\.)x\.com$|(^|\.)twitter\.com$/i.test(location.hostname);
-  }
-
   function encodePayload(payload) {
     return btoa(unescape(encodeURIComponent(JSON.stringify(compactPayload(payload)))));
   }
@@ -275,7 +506,7 @@
   function renderOpenedInApp() {
     root.querySelector('[data-score]').textContent = '↗';
     root.querySelector('[data-status]').textContent = 'Opened in Verax';
-    root.querySelector('[data-summary]').textContent = 'This site blocks in-page audit requests, so Verax opened the audit in the main app.';
+    root.querySelector('[data-summary]').textContent = 'This site blocked the in-page check, so Verax opened the main app instead.';
     root.querySelector('[data-evidence]').innerHTML = '';
   }
 
@@ -393,7 +624,7 @@
       const script = document.createElement('script');
       const timeout = window.setTimeout(() => {
         cleanup();
-        reject(new Error('Audit timed out'));
+        reject(new Error('Check timed out'));
       }, 12000);
 
       function cleanup() {
@@ -423,31 +654,20 @@
 
   async function scan(payload, busyLabel, options = {}) {
     setBusy(busyLabel);
-    if (strictHostRequiresApp()) {
-      openInApp(payload, options.fallbackWindow);
-      renderOpenedInApp();
-      return;
-    }
     try {
-      const response = await fetch(`${origin}/api/scan`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'Audit failed');
-      render(data.result);
+      const result = await localRunScan(payload);
+      render(result);
     } catch (error) {
       try {
         const data = await scanViaScript(payload);
         render(data.result);
       } catch (fallbackError) {
-        if (options.fallbackWindow || fallbackError.message === 'The page blocked the audit request') {
+        if (options.allowOpenInApp || options.fallbackWindow) {
           openInApp(payload, options.fallbackWindow);
           renderOpenedInApp();
           return;
         }
-        renderError(error);
+        renderError(error.message ? error : fallbackError);
       }
     }
   }
@@ -505,16 +725,14 @@
     scan({ type: 'text', content: window.getSelection().toString().trim() || pageSnippet() }, 'Reading selected text...');
   });
   root.querySelector('[data-scan-url]').addEventListener('click', () => {
-    scan({ type: 'url', url: location.href, content: location.href }, 'Checking page URL...');
+    scan({ type: 'url', url: location.href, content: location.href, pageSnapshot: pageSnapshot() }, 'Checking page URL...');
   });
   root.querySelector('[data-capture-screen]').addEventListener('click', async () => {
-    const fallbackWindow = strictHostRequiresApp() ? window.open('about:blank', '_blank') : null;
     setBusy('Choose the tab, window, or screen area that contains the image.');
     try {
       const media = await captureScreenImage();
-      scan({ type: 'image', media }, 'Checking captured image texture...', { fallbackWindow });
+      await scan({ type: 'image', media }, 'Checking captured image texture...');
     } catch (error) {
-      if (fallbackWindow && !fallbackWindow.closed) fallbackWindow.close();
       renderError(error);
     }
   });
