@@ -1,25 +1,26 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-labelledby="title desc">
   <title id="title">clAIrity logo</title>
-  <desc id="desc">A friendly scan-lens mark with AI highlighted in the center.</desc>
+  <desc id="desc">A sleek browser lens mark with AI highlighted in the center.</desc>
   <defs>
-    <linearGradient id="lens" x1="28" y1="22" x2="132" y2="138" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#7FE4D2"/>
-      <stop offset="0.55" stop-color="#56C7DB"/>
-      <stop offset="1" stop-color="#4C7DF0"/>
+    <linearGradient id="field" x1="20" y1="18" x2="142" y2="144" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#7BF7CE"/>
+      <stop offset="0.42" stop-color="#56BDF5"/>
+      <stop offset="0.72" stop-color="#8B6CFF"/>
+      <stop offset="1" stop-color="#FF806C"/>
     </linearGradient>
-    <linearGradient id="shine" x1="42" y1="34" x2="116" y2="118" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.95"/>
-      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0.32"/>
+    <linearGradient id="glass" x1="42" y1="30" x2="118" y2="128" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.92"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0.34"/>
     </linearGradient>
-    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="14" stdDeviation="14" flood-color="#0E534B" flood-opacity="0.2"/>
+    <filter id="lift" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="18" stdDeviation="18" flood-color="#134069" flood-opacity="0.22"/>
     </filter>
   </defs>
-  <rect x="14" y="14" width="132" height="132" rx="38" fill="url(#lens)" filter="url(#shadow)"/>
-  <path d="M45 80c0-22.6 18.4-41 41-41 10.9 0 20.8 4.2 28.1 11.2" fill="none" stroke="url(#shine)" stroke-width="13" stroke-linecap="round"/>
-  <path d="M108 106l24 24" fill="none" stroke="#FFFFFF" stroke-width="14" stroke-linecap="round"/>
-  <circle cx="82" cy="78" r="39" fill="#FFFFFF" fill-opacity="0.9"/>
-  <circle cx="82" cy="78" r="31" fill="#E9FFFA"/>
-  <path d="M44 33h19M33 44v19M116 33H97M127 44v19M44 127h19M33 116V97M116 127H97M127 116V97" fill="none" stroke="#FFFFFF" stroke-width="7" stroke-linecap="round"/>
-  <text x="82" y="91" text-anchor="middle" font-family="Avenir Next, Arial, sans-serif" font-size="38" font-weight="900" letter-spacing="-2" fill="#134F58">AI</text>
+  <rect x="16" y="16" width="128" height="128" rx="42" fill="url(#field)" filter="url(#lift)"/>
+  <path d="M38 50c17-21 52-25 77-7 21 15 29 42 20 65" fill="none" stroke="url(#glass)" stroke-width="12" stroke-linecap="round"/>
+  <path d="M37 113c19 17 51 19 75 2" fill="none" stroke="#FFFFFF" stroke-opacity="0.38" stroke-width="10" stroke-linecap="round"/>
+  <rect x="48" y="54" width="64" height="52" rx="20" fill="#FFFFFF" fill-opacity="0.88"/>
+  <rect x="55" y="61" width="50" height="38" rx="15" fill="#F7FCFF" fill-opacity="0.92"/>
+  <path d="M113 104l19 19" fill="none" stroke="#FFFFFF" stroke-width="12" stroke-linecap="round"/>
+  <text x="80" y="90" text-anchor="middle" font-family="Avenir Next, SF Pro Display, Arial, sans-serif" font-size="34" font-weight="900" letter-spacing="-2" fill="#18304F">AI</text>
 </svg>
