@@ -1,5 +1,6 @@
 import {
   extractImageDimensions,
+  extractImageStats,
   fileMetadata,
   getSettings,
   readableType,
@@ -156,7 +157,11 @@ els.fileForm.addEventListener('submit', async (event) => {
   }
   setBusy(true, 'Reading...');
   const dimensions = await extractImageDimensions(state.selectedFile).catch(() => ({}));
-  const metadata = fileMetadata(state.selectedFile, dimensions);
+  const visualStats = await extractImageStats(state.selectedFile).catch(() => ({}));
+  const metadata = fileMetadata(state.selectedFile, {
+    ...dimensions,
+    visualStats
+  });
   const type = metadata.type.startsWith('audio/')
     ? 'audio'
     : metadata.type.startsWith('video/')

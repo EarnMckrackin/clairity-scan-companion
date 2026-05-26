@@ -141,6 +141,92 @@ export async function extractImageDimensions(file) {
   }
 }
 
+export async function extractImageStats(file) {
+  if (!file || !file.type.startsWith('image/')) return {};
+  const url = URL.createObjectURL(file);
+  try {
+    const image = new Image();
+    await new Promise((resolve, reject) => {
+      image.onload = resolve;
+      image.onerror = reject;
+      image.src = url;
+    });
+
+    const sampleSize = 160;
+    const scale = Math.min(sampleSize / image.naturalWidth, sampleSize / image.naturalHeight, 1);
+    const width = Math.max(1, Math.round(image.naturalWidth * scale));
+    const height = Math.max(1, Math.round(image.naturalHeight * scale));
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const context = canvas.getContext('2d', { willReadFrequently: true });
+    context.drawImage(image, 0, 0, width, height);
+    const { data } = context.getImageData(0, 0, width, height);
+
+    const luminance = new Float32Array(width * height);
+    let lumaSum = 0;
+    let lumaSq = 0;
+    let saturationSum = 0;
+    let channelDiffSum = 0;
+    let grayscalePixels = 0;
+
+    for (let i = 0, p = 0; i < data.length; i += 4, p += 1) {
+      const r = data[i] / 255;
+      const g = data[i + 1] / 255;
+      const b = data[i + 2] / 255;
+      const max = Math.max(r, g, b);
+      const min = Math.min(r, g, b);
+      const luma = (0.2126 * r + 0.7152 * g + 0.0722 * b) * 255;
+      const saturation = max === 0 ? 0 : (max - min) / max;
+      const channelDiff = (Math.abs(r - g) + Math.abs(g - b) + Math.abs(r - b)) / 3;
+      luminance[p] = luma;
+      lumaSum += luma;
+      lumaSq += luma * luma;
+      saturationSum += saturation;
+      channelDiffSum += channelDiff;
+      if (channelDiff < 0.035) grayscalePixels += 1;
+    }
+
+    let edgeHits = 0;
+    let smoothHits = 0;
+    let neighborComparisons = 0;
+    let highContrastHits = 0;
+    for (let y = 0; y < height - 1; y += 1) {
+      for (let x = 0; x < width - 1; x += 1) {
+        const p = y * width + x;
+        const dx = Math.abs(luminance[p] - luminance[p + 1]);
+        const dy = Math.abs(luminance[p] - luminance[p + width]);
+        const diff = Math.max(dx, dy);
+        neighborComparisons += 1;
+        if (diff > 24) edgeHits += 1;
+        if (diff < 4) smoothHits += 1;
+        if (diff > 62) highContrastHits += 1;
+      }
+    }
+
+    const pixels = width * height;
+    const mean = lumaSum / pixels;
+    const variance = Math.max(0, lumaSq / pixels - mean * mean);
+    const edgeDensity = edgeHits / Math.max(1, neighborComparisons);
+    const smoothness = smoothHits / Math.max(1, neighborComparisons);
+
+    return {
+      sampleWidth: width,
+      sampleHeight: height,
+      grayscaleRatio: Number((grayscalePixels / pixels).toFixed(3)),
+      meanLuminance: Number(mean.toFixed(1)),
+      luminanceStd: Number(Math.sqrt(variance).toFixed(1)),
+      saturationMean: Number((saturationSum / pixels).toFixed(3)),
+      channelDiffMean: Number((channelDiffSum / pixels).toFixed(3)),
+      edgeDensity: Number(edgeDensity.toFixed(3)),
+      smoothness: Number(smoothness.toFixed(3)),
+      highContrastDensity: Number((highContrastHits / Math.max(1, neighborComparisons)).toFixed(3))
+    };
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
 export function fileMetadata(file, dimensions = {}) {
   const ageMs = Date.now() - (file.lastModified || Date.now());
   return {

@@ -37,8 +37,8 @@ function clampScore(score) {
 }
 
 function statusFromScore(score) {
-  if (score >= 82) return { label: 'High concern', tone: 'concern' };
-  if (score >= 58) return { label: 'Use care', tone: 'care' };
+  if (score >= 78) return { label: 'High concern', tone: 'concern' };
+  if (score >= 50) return { label: 'Use care', tone: 'care' };
   return { label: 'Likely okay', tone: 'ok' };
 }
 
@@ -265,8 +265,48 @@ function analyzeMedia(payload) {
       score -= 5;
     }
   }
+
+  if (mediaType === 'image' && media.visualStats) {
+    const visual = media.visualStats;
+    const hasStats = typeof visual.edgeDensity === 'number' && typeof visual.grayscaleRatio === 'number';
+    if (hasStats) {
+      signals.push(evidence('Image pixels checked locally', 'Low', 'clAIrity used aggregate texture and color statistics from your browser, not the raw image.'));
+      score -= 4;
+
+      if (visual.grayscaleRatio > 0.78 && visual.edgeDensity > 0.11 && visual.luminanceStd > 42) {
+        signals.push(evidence('Black-and-white photo texture', 'Low', 'The image has monochrome grain and contrast patterns that fit a scanned or archival photo.'));
+        score -= 18;
+      } else if (visual.grayscaleRatio > 0.78) {
+        signals.push(evidence('Mostly monochrome image', 'Low', 'Black-and-white images need source checks, but the color profile is not a synthetic-media warning by itself.'));
+        score -= 8;
+      }
+
+      if (visual.edgeDensity > 0.18 && visual.luminanceStd > 48) {
+        signals.push(evidence('Natural detail variation', 'Low', 'The scan found varied edges and texture rather than a uniformly smooth surface.'));
+        score -= 8;
+      }
+
+      if (visual.smoothness > 0.52 && visual.edgeDensity < 0.105 && visual.luminanceStd < 44) {
+        signals.push(evidence('Unusually smooth image texture', 'High', 'Large smooth areas with little edge variation can appear in generated or heavily edited images.'));
+        score += 18;
+      } else if (visual.smoothness > 0.46 && visual.edgeDensity < 0.13) {
+        signals.push(evidence('Soft texture pattern', 'Medium', 'The image has smoother texture than expected, so it deserves a second look.'));
+        score += 10;
+      }
+
+      if (visual.saturationMean > 0.36 && visual.highContrastDensity < 0.055) {
+        signals.push(evidence('Polished color profile', 'Medium', 'High color saturation with limited hard contrast can be a sign of stylized or generated media.'));
+        score += 8;
+      }
+    }
+  }
+
   if (media.lastModifiedAgeDays != null && media.lastModifiedAgeDays < 1) {
     signals.push(evidence('Recently changed file', 'Medium', 'The file metadata says it was modified recently.'));
+    score += media.visualStats ? 4 : 8;
+  }
+  if (/screenshot|screen shot|screen-shot/i.test(media.name || '')) {
+    signals.push(evidence('Screenshot rather than original file', 'Medium', 'Screenshots often remove source, camera, and provenance metadata.'));
     score += 8;
   }
   if (/ai|generated|synthetic|deepfake|edited|final-v\d/i.test(media.name || '')) {
@@ -291,7 +331,9 @@ function analyzeMedia(payload) {
       ? 'Confirm the message with the person through another channel.'
       : 'Look for the original post or source before sharing this media.',
     metadata: media,
-    limitations: ['Upload scans in this MVP use browser-provided metadata only; raw files are not stored server-side.']
+    limitations: [media.visualStats
+      ? 'Upload scans use local pixel statistics and metadata. They are useful clues, not a definitive AI detector.'
+      : 'Upload scans in this MVP use browser-provided metadata only; raw files are not stored server-side.']
   });
 }
 
