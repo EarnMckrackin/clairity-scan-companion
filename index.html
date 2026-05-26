@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>clAIrity</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="assets/clarity.css" />
+  </head>
+  <body>
+    <main class="app-frame">
+      <header class="brand-row">
+        <div class="brand-lockup" aria-label="clAIrity">
+          <img class="brand-logo" src="assets/clairity-logo.svg" alt="" />
+          <span class="wordmark">cl<span class="word-ai">AI</span>rity</span>
+        </div>
+        <nav class="screen-links" aria-label="clAIrity screens">
+          <a class="screen-link active" href="/">Scan</a>
+          <a class="screen-link" href="screens/scan-history.html">History</a>
+          <a class="screen-link" href="screens/settings-privacy.html">Privacy</a>
+          <a class="screen-link" href="screens/floating-companion.html">Floating companion</a>
+        </nav>
+      </header>
+
+      <div class="shell-grid">
+        <aside class="sidebar" aria-label="Primary navigation">
+          <button class="nav-item active" type="button">Scan</button>
+          <a class="nav-item" href="screens/scan-history.html">History</a>
+          <a class="nav-item" href="screens/settings-privacy.html">Privacy settings</a>
+          <a class="nav-item" href="screens/floating-companion.html">Floating companion</a>
+        </aside>
+
+        <section class="main-stack">
+          <section class="scan-stage enhanced" aria-labelledby="scan-title">
+            <div class="hero-copy">
+              <p class="pill">Scan a webpage, post, file, or text</p>
+              <h1 id="scan-title">One friendly check before you trust what you see.</h1>
+              <p>
+                clAIrity checks source clues, edit patterns, media texture, audio mismatch,
+                and context signals. The result stays plain: what we noticed, why it matters,
+                and what to do next.
+              </p>
+
+              <div class="source-card" aria-label="Scan source options">
+                <div class="source-tabs" role="tablist" aria-label="Choose scan source">
+                  <button class="tab-button active" type="button" data-source="url">Web link</button>
+                  <button class="tab-button" type="button" data-source="upload">Upload media</button>
+                  <button class="tab-button" type="button" data-source="text">Paste text</button>
+                </div>
+
+                <form class="url-scan" id="scanForm" data-panel="url">
+                  <input id="scanInput" type="url" value="https://www.reddit.com/r/isthisAI/s/qUk7Y4r7Ao" aria-label="Webpage or social post URL" />
+                  <button class="primary-btn" type="submit" data-scan-submit data-idle-label="Scan now">Scan now</button>
+                </form>
+
+                <form class="drop-zone notice-hidden" id="fileForm" data-panel="upload">
+                  <div>
+                    <strong>Drop a photo, video, or audio clip</strong>
+                    <span>clAIrity reads image statistics and file metadata in your browser. Raw files are not saved.</span>
+                  </div>
+                  <label class="secondary-btn" for="fileInput">Choose file</label>
+                  <input class="file-input" id="fileInput" type="file" accept="image/*,video/*,audio/*" />
+                  <span class="file-name" id="fileName">No file selected</span>
+                  <button class="primary-btn" type="submit" data-scan-submit data-idle-label="Scan file">Scan file</button>
+                </form>
+
+                <form class="notice-hidden" id="textForm" data-panel="text">
+                  <textarea class="paste-box" id="textInput" aria-label="Text to scan">This urgent story is spreading fast. Share before it disappears.</textarea>
+                  <button class="primary-btn stack-gap" type="submit" data-scan-submit data-idle-label="Scan text">Scan text</button>
+                </form>
+
+                <p id="scanMessage" class="pill">Ready to scan · history stays on this device</p>
+              </div>
+            </div>
+
+            <aside class="score-panel result-stack" aria-label="Safety score">
+              <div class="score-orb"><strong id="scoreValue">--</strong></div>
+              <div class="score-status">
+                <h2 id="statusTitle">Ready</h2>
+                <span class="status-badge" id="statusBadge">0 clues</span>
+              </div>
+              <p id="plainSummary">Run a scan to see a real score and plain-language explanation.</p>
+              <button class="quiet-btn" id="copySummary" type="button">Copy simple summary</button>
+              <button class="secondary-btn" id="saveResult" type="button">Save to history</button>
+            </aside>
+          </section>
+
+          <section class="module" aria-labelledby="media-state-title">
+            <div class="score-status">
+              <div>
+                <p class="pill">Scan details</p>
+                <h2 id="media-state-title">Evidence and next step</h2>
+              </div>
+              <div class="media-tabs" role="tablist" aria-label="Result media type">
+                <button class="segment-button active" type="button" data-type="image">Image</button>
+                <button class="segment-button" type="button" data-type="video">Video</button>
+                <button class="segment-button" type="button" data-type="audio">Audio</button>
+                <button class="segment-button" type="button" data-type="text">Text</button>
+              </div>
+            </div>
+
+            <div class="detail-grid stack-gap">
+              <div class="media-preview" id="mediaPreview" aria-hidden="true">
+                <div class="text-lines notice-hidden" id="textLines"><span></span><span></span><span></span></div>
+              </div>
+
+              <div class="evidence-card">
+                <h3 id="detailTitle">No scan yet</h3>
+                <p id="detailCopy">Results appear here after a scan completes.</p>
+                <div class="timeline" id="detailSignals"></div>
+                <button class="secondary-btn" id="trustedSearch" type="button">Open trusted search</button>
+              </div>
+            </div>
+          </section>
+
+          <section class="evidence-grid" aria-label="App actions">
+            <article class="module">
+              <h2>Local history</h2>
+              <p>Scan summaries are saved in this browser when history is enabled. Raw uploaded media is not saved.</p>
+              <a class="secondary-btn full-width" href="screens/scan-history.html">Open history</a>
+            </article>
+
+            <article class="module">
+              <h2>Privacy controls</h2>
+              <p>Choose whether summaries are saved, clear local history, and set the API base for companion mode.</p>
+              <a class="secondary-btn full-width" href="screens/settings-privacy.html">Open privacy</a>
+            </article>
+
+            <article class="module">
+              <h2>Floating companion</h2>
+              <p>Add clAIrity as a floating browser helper that scans the current page or selected text while you browse.</p>
+              <a class="secondary-btn full-width" href="screens/floating-companion.html">Set up floating scan</a>
+            </article>
+          </section>
+        </section>
+      </div>
+    </main>
+
+    <script type="module" src="assets/scan-app.js"></script>
+  </body>
+</html>
