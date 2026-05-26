@@ -48,29 +48,49 @@
               <strong>Save scan summaries</strong>
               <p>Keep scores, explanations, and next steps in History.</p>
             </div>
-            <button class="toggle" type="button" aria-label="Save scan summaries on"></button>
+            <button class="toggle" type="button" data-setting="saveSummaries" data-label="Save scan summaries" aria-label="Save scan summaries on"></button>
           </div>
           <div class="settings-row">
             <div>
-              <strong>Save uploaded media</strong>
-              <p>Keep the original uploaded file with the result.</p>
+              <strong>Save upload details</strong>
+              <p>Keep filename, type, and dimensions with the result. Raw files are not saved.</p>
             </div>
-            <button class="toggle off" type="button" aria-label="Save uploaded media off"></button>
+            <button class="toggle off" type="button" data-setting="saveUploadedMedia" data-label="Save upload details" aria-label="Save upload details off"></button>
           </div>
           <div class="settings-row">
             <div>
               <strong>Family mode</strong>
               <p>Use larger labels, gentle wording, and simpler next steps.</p>
             </div>
-            <button class="toggle" type="button" aria-label="Family mode on"></button>
+            <button class="toggle" type="button" data-setting="familyMode" data-label="Family mode" aria-label="Family mode on"></button>
           </div>
           <div class="settings-row">
             <div>
               <strong>On-page extension warnings</strong>
               <p>Show a small notice near media when clAIrity sees concerning clues.</p>
             </div>
-            <button class="toggle" type="button" aria-label="On-page warnings on"></button>
+            <button class="toggle" type="button" data-setting="extensionWarnings" data-label="On-page warnings" aria-label="On-page warnings on"></button>
           </div>
+          <div class="settings-row">
+            <div>
+              <strong>Upload retention</strong>
+              <p>How long uploaded media may remain in active memory during a scan.</p>
+            </div>
+            <select id="retentionHours" aria-label="Upload retention">
+              <option value="1">1 hour</option>
+              <option value="24">24 hours</option>
+              <option value="168">7 days</option>
+            </select>
+          </div>
+          <div class="settings-row">
+            <div>
+              <strong>API base for extension</strong>
+              <p>Leave blank for this website. Use a deployed URL when loading the extension locally.</p>
+            </div>
+            <input id="apiBase" type="url" placeholder="https://clairity-scan-companion.vercel.app" aria-label="API base URL" />
+          </div>
+          <button class="secondary-btn stack-gap" id="clearLocalHistory" type="button">Clear local history</button>
+          <p class="fine-print" id="settingsMessage">Settings are saved only in this browser.</p>
         </article>
 
         <aside class="settings-card">
@@ -86,14 +106,6 @@
       </section>
     </main>
 
-    <script>
-      document.querySelectorAll('.toggle').forEach((toggle) => {
-        toggle.addEventListener('click', () => {
-          toggle.classList.toggle('off');
-          const state = toggle.classList.contains('off') ? 'off' : 'on';
-          toggle.setAttribute('aria-label', toggle.getAttribute('aria-label').replace(/(on|off)$/i, state));
-        });
-      });
-    </script>
+    <script type="module" src="../assets/settings-app.js"></script>
   </body>
 </html>

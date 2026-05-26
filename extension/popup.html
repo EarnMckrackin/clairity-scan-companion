@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>clAIrity Extension</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <main>
+      <header>
+        <strong>cl<span>AI</span>rity</strong>
+        <small id="state">Ready</small>
+      </header>
+      <section class="score">
+        <b id="score">--</b>
+        <div>
+          <h1 id="status">Scan this page</h1>
+          <p id="summary">Check the current tab for source and context clues.</p>
+        </div>
+      </section>
+      <button id="scanPage">Scan current page</button>
+      <button id="scanSelection" class="secondary">Scan selected text</button>
+      <label>
+        API base
+        <input id="apiBase" type="url" placeholder="https://clairity-scan-companion.vercel.app" />
+      </label>
+      <p class="note">Results are saved in extension storage on this device.</p>
+    </main>
+    <script src="popup.js"></script>
+  </body>
+</html>

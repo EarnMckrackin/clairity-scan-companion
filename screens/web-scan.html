@@ -43,27 +43,30 @@
 
               <div class="source-card" aria-label="Scan source options">
                 <div class="source-tabs" role="tablist" aria-label="Choose scan source">
-                  <button class="tab-button active" type="button" data-source="link">Web link</button>
+                  <button class="tab-button active" type="button" data-source="url">Web link</button>
                   <button class="tab-button" type="button" data-source="upload">Upload media</button>
                   <button class="tab-button" type="button" data-source="text">Paste text</button>
                 </div>
 
-                <form class="url-scan" id="scanForm" data-panel="link">
-                  <input id="scanInput" type="url" value="https://social.example/post/news-image" aria-label="Webpage or social post URL" />
-                  <button class="primary-btn" type="submit">Scan now</button>
+                <form class="url-scan" id="scanForm" data-panel="url">
+                  <input id="scanInput" type="url" value="https://www.reddit.com/r/isthisAI/s/qUk7Y4r7Ao" aria-label="Webpage or social post URL" />
+                  <button class="primary-btn" type="submit" data-scan-submit data-idle-label="Scan now">Scan now</button>
                 </form>
 
-                <div class="drop-zone notice-hidden" data-panel="upload">
+                <form class="drop-zone notice-hidden" id="fileForm" data-panel="upload">
                   <div>
                     <strong>Drop a photo, video, or audio clip</strong>
-                    <span>Prototype preview: no media leaves this page.</span>
+                    <span>clAIrity reads file metadata in your browser. Raw files are not saved.</span>
                   </div>
-                  <button class="secondary-btn" id="chooseFile" type="button">Choose file</button>
-                </div>
+                  <label class="secondary-btn" for="fileInput">Choose file</label>
+                  <input class="file-input" id="fileInput" type="file" accept="image/*,video/*,audio/*" />
+                  <span class="file-name" id="fileName">No file selected</span>
+                  <button class="primary-btn" type="submit" data-scan-submit data-idle-label="Scan file">Scan file</button>
+                </form>
 
                 <form class="notice-hidden" id="textForm" data-panel="text">
                   <textarea class="paste-box" id="textInput" aria-label="Text to scan">This urgent story is spreading fast. Share before it disappears.</textarea>
-                  <button class="primary-btn stack-gap" type="submit">Scan text</button>
+                  <button class="primary-btn stack-gap" type="submit" data-scan-submit data-idle-label="Scan text">Scan text</button>
                 </form>
 
                 <p id="scanMessage" class="pill">Ready to scan · family mode on</p>
@@ -77,9 +80,10 @@
                 <span class="status-badge" id="statusBadge">3 clues</span>
               </div>
               <p id="plainSummary">
-                A few clues deserve a second look. This does not prove the post is AI-made.
+                Run a scan to see a real score and plain-language explanation.
               </p>
               <button class="quiet-btn" id="copySummary" type="button">Copy simple summary</button>
+              <button class="secondary-btn" id="saveResult" type="button">Save to history</button>
             </aside>
           </section>
 
@@ -87,7 +91,7 @@
             <div class="score-status">
               <div>
                 <p class="pill">Result detail states</p>
-                <h2 id="media-state-title">Scan details by media type</h2>
+                <h2 id="media-state-title">Scan details</h2>
               </div>
               <div class="media-tabs" role="tablist" aria-label="Result media type">
                 <button class="segment-button active" type="button" data-type="image">Image</button>
@@ -104,7 +108,7 @@
 
               <div class="evidence-card">
                 <h3 id="detailTitle">Shared news image</h3>
-                <p id="detailCopy">The image may be real, edited, or reposted out of context. clAIrity found no original source nearby and noticed softened texture around the main subject.</p>
+                <p id="detailCopy">Results appear here after a scan completes.</p>
                 <div class="timeline" id="detailSignals">
                   <div class="timeline-step"><span class="signal-dot">1</span><span>Original source not attached</span><span class="mini-score">High</span></div>
                   <div class="timeline-step"><span class="signal-dot">2</span><span>Background texture looks unusually smooth</span><span class="mini-score">Med</span></div>
@@ -128,163 +132,19 @@
             <article class="module">
               <h2>What to do next</h2>
               <p>Before sharing, look for the original post, check a trusted news source, or ask an adult/helper to review the page.</p>
-              <button class="secondary-btn" type="button">Save next step</button>
+              <button class="secondary-btn" id="trustedSearch" type="button">Open trusted search</button>
             </article>
 
             <article class="module">
-              <h2>Recent scans</h2>
-              <div class="history-row"><span>Voice message</span><span class="mini-score">88</span></div>
-              <div class="history-row"><span>Short video clip</span><span class="mini-score">42</span></div>
-              <div class="history-row"><span>Shared news image</span><span class="mini-score">74</span></div>
+              <h2>Local history</h2>
+              <p>Scan summaries are saved in this browser when history is enabled. Raw uploaded media is not saved.</p>
+              <a class="secondary-btn full-width" href="scan-history.html">Open history</a>
             </article>
           </section>
         </section>
       </div>
     </main>
 
-    <script>
-      const results = {
-        image: {
-          score: '74',
-          status: 'Use care',
-          badge: '3 clues',
-          badgeClass: '',
-          title: 'Shared news image',
-          copy: 'The image may be real, edited, or reposted out of context. clAIrity found no original source nearby and noticed softened texture around the main subject.',
-          preview: '',
-          signals: [
-            ['1', 'Original source not attached', 'High'],
-            ['2', 'Background texture looks unusually smooth', 'Med'],
-            ['3', 'Caption changes across reposts', 'Med']
-          ]
-        },
-        video: {
-          score: '42',
-          status: 'Likely okay',
-          badge: '1 clue',
-          badgeClass: 'ok',
-          title: 'Short video clip',
-          copy: 'The clip has consistent lighting and no obvious edit boundary. The page date still deserves a quick check before sharing.',
-          preview: 'video',
-          signals: [
-            ['1', 'Lighting stays consistent between cuts', 'Low'],
-            ['2', 'No obvious face or hand warping', 'Low'],
-            ['3', 'Page author needs a quick check', 'Med']
-          ]
-        },
-        audio: {
-          score: '88',
-          status: 'High concern',
-          badge: '4 clues',
-          badgeClass: 'concern',
-          title: 'Voice message',
-          copy: 'The voice rhythm and background noise change suddenly mid-sentence. Confirm with the person through another channel.',
-          preview: 'audio',
-          signals: [
-            ['1', 'Voice rhythm changes suddenly', 'High'],
-            ['2', 'Background noise cuts mid-sentence', 'High'],
-            ['3', 'Message asks for urgent action', 'Med']
-          ]
-        },
-        text: {
-          score: '69',
-          status: 'Use care',
-          badge: '2 clues',
-          badgeClass: '',
-          title: 'Viral text post',
-          copy: 'The wording uses urgency and does not name a source. This could be normal internet copy, but it needs a source check.',
-          preview: 'text',
-          signals: [
-            ['1', 'No named source or date in the claim', 'High'],
-            ['2', 'Urgent sharing language appears', 'Med'],
-            ['3', 'No direct media edits detected', 'Low']
-          ]
-        }
-      };
-
-      const form = document.querySelector('#scanForm');
-      const textForm = document.querySelector('#textForm');
-      const input = document.querySelector('#scanInput');
-      const message = document.querySelector('#scanMessage');
-      const score = document.querySelector('#scoreValue');
-      const statusTitle = document.querySelector('#statusTitle');
-      const statusBadge = document.querySelector('#statusBadge');
-      const summary = document.querySelector('#plainSummary');
-      const copy = document.querySelector('#copySummary');
-      const preview = document.querySelector('#mediaPreview');
-      const textLines = document.querySelector('#textLines');
-      const detailTitle = document.querySelector('#detailTitle');
-      const detailCopy = document.querySelector('#detailCopy');
-      const detailSignals = document.querySelector('#detailSignals');
-
-      function setResult(type) {
-        const result = results[type];
-        score.textContent = result.score;
-        statusTitle.textContent = result.status;
-        statusBadge.textContent = result.badge;
-        statusBadge.className = `status-badge ${result.badgeClass}`;
-        summary.textContent = result.copy;
-        detailTitle.textContent = result.title;
-        detailCopy.textContent = result.copy;
-        preview.className = `media-preview ${result.preview}`;
-        textLines.classList.toggle('notice-hidden', type !== 'text');
-        detailSignals.innerHTML = result.signals.map(([number, label, weight]) => (
-          `<div class="timeline-step"><span class="signal-dot">${number}</span><span>${label}</span><span class="mini-score">${weight}</span></div>`
-        )).join('');
-        document.querySelectorAll('[data-type]').forEach((button) => {
-          button.classList.toggle('active', button.dataset.type === type);
-        });
-      }
-
-      document.querySelectorAll('[data-source]').forEach((button) => {
-        button.addEventListener('click', () => {
-          document.querySelectorAll('[data-source]').forEach((item) => item.classList.remove('active'));
-          button.classList.add('active');
-          document.querySelectorAll('[data-panel]').forEach((panel) => {
-            panel.classList.toggle('notice-hidden', panel.dataset.panel !== button.dataset.source);
-          });
-          message.textContent = button.dataset.source === 'upload'
-            ? 'Ready for a private local preview'
-            : button.dataset.source === 'text'
-              ? 'Ready to scan pasted text'
-              : 'Ready to scan · family mode on';
-        });
-      });
-
-      document.querySelectorAll('[data-type]').forEach((button) => {
-        button.addEventListener('click', () => setResult(button.dataset.type));
-      });
-
-      form.addEventListener('submit', (event) => {
-        event.preventDefault();
-        const hasSocial = input.value.includes('social') || input.value.includes('post');
-        setResult(hasSocial ? 'image' : 'video');
-        message.textContent = hasSocial ? 'Scan complete · 3 clues found' : 'Scan complete · 1 clue found';
-      });
-
-      textForm.addEventListener('submit', (event) => {
-        event.preventDefault();
-        setResult('text');
-        message.textContent = 'Text scan complete · 2 clues found';
-      });
-
-      document.querySelector('#chooseFile').addEventListener('click', () => {
-        setResult('audio');
-        message.textContent = 'Demo file scan complete · 4 clues found';
-      });
-
-      copy.addEventListener('click', async () => {
-        const text = `clAIrity says: ${statusTitle.textContent}. ${summary.textContent}`;
-        await navigator.clipboard?.writeText(text);
-        copy.textContent = 'Summary copied';
-        setTimeout(() => {
-          copy.textContent = 'Copy simple summary';
-        }, 1600);
-      });
-
-      document.querySelector('#trustedSearch').addEventListener('click', () => {
-        message.textContent = 'Trusted search saved as the next step';
-      });
-    </script>
+    <script type="module" src="../assets/scan-app.js"></script>
   </body>
 </html>

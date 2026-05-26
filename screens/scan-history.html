@@ -32,10 +32,10 @@
           </p>
         </div>
         <aside class="score-panel">
-          <div class="score-orb"><strong>12</strong></div>
+          <div class="score-orb"><strong id="historyTotal">0</strong></div>
           <div>
             <h2>Scans this week</h2>
-            <p>Four were saved for later. Two were marked for a family review.</p>
+            <p><span id="reviewCount">0</span> local scans currently need a second look.</p>
           </div>
         </aside>
       </section>
@@ -54,68 +54,24 @@
             <button class="segment-button" type="button" data-filter="ok">Likely okay</button>
           </div>
 
-          <div id="historyList">
-            <article class="history-item" data-kind="care">
-              <span class="media-icon">IMG</span>
-              <div>
-                <span class="history-title">Shared news image</span>
-                <span class="history-meta">Social post · Use care · Original source not attached</span>
-              </div>
-              <span class="mini-score">74</span>
-            </article>
-            <article class="history-item" data-kind="concern">
-              <span class="media-icon">AUD</span>
-              <div>
-                <span class="history-title">Voice message from group chat</span>
-                <span class="history-meta">Audio · High concern · Voice rhythm changed suddenly</span>
-              </div>
-              <span class="mini-score">88</span>
-            </article>
-            <article class="history-item" data-kind="ok">
-              <span class="media-icon">VID</span>
-              <div>
-                <span class="history-title">Short video clip</span>
-                <span class="history-meta">Webpage · Likely okay · Page date still needs a check</span>
-              </div>
-              <span class="mini-score">42</span>
-            </article>
-            <article class="history-item" data-kind="care">
-              <span class="media-icon">TXT</span>
-              <div>
-                <span class="history-title">Viral text post</span>
-                <span class="history-meta">Text · Use care · Urgent wording without a named source</span>
-              </div>
-              <span class="mini-score">69</span>
-            </article>
-          </div>
+          <p class="empty-state" id="emptyHistory">No local scans saved yet. Run a scan to build history in this browser.</p>
+          <div id="historyList"></div>
+          <button class="secondary-btn stack-gap" id="clearHistory" type="button">Clear local history</button>
         </article>
 
         <aside class="history-card">
           <h2>Family review queue</h2>
           <p>Saved items can be grouped for a parent, teacher, or trusted helper.</p>
           <div class="signal-list">
-            <div class="signal"><span class="signal-dot">2</span><p>Need another person to review before sharing.</p></div>
-            <div class="signal"><span class="signal-dot">4</span><p>Have a trusted-source next step saved.</p></div>
-            <div class="signal"><span class="signal-dot">0</span><p>Contain uploaded media older than the retention setting.</p></div>
+            <div class="signal"><span class="signal-dot">1</span><p>Use the filters to find scans that need more checking.</p></div>
+            <div class="signal"><span class="signal-dot">2</span><p>Open the scan page to copy a plain-language summary.</p></div>
+            <div class="signal"><span class="signal-dot">3</span><p>Clear local history any time from this browser.</p></div>
           </div>
           <button class="quiet-btn full-width stack-gap" type="button">Share review list</button>
         </aside>
       </section>
     </main>
 
-    <script>
-      const filterButtons = document.querySelectorAll('[data-filter]');
-      const historyItems = document.querySelectorAll('[data-kind]');
-
-      filterButtons.forEach((button) => {
-        button.addEventListener('click', () => {
-          filterButtons.forEach((item) => item.classList.remove('active'));
-          button.classList.add('active');
-          historyItems.forEach((item) => {
-            item.classList.toggle('notice-hidden', button.dataset.filter !== 'all' && item.dataset.kind !== button.dataset.filter);
-          });
-        });
-      });
-    </script>
+    <script type="module" src="../assets/history-app.js"></script>
   </body>
 </html>
