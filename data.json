@@ -1,18 +1,18 @@
 {
   "product": {
-    "name": "clAIrity",
-    "tagline": "A friendly media scan for everyday people.",
-    "audience": "General consumers, including families, kids, and older adults.",
-    "primaryFlow": "Scan a webpage or social post",
-    "resultMode": "Safety score with explanation",
+    "name": "Verax",
+    "tagline": "Verifiable auditability for digital assets.",
+    "audience": "Teams and agents that require source-to-consumption transparency.",
+    "primaryFlow": "Audit a webpage, asset, or text sample",
+    "resultMode": "Diagnostic status with provenance signals",
     "updatedAt": "2026-05-26 00:00 ET"
   },
   "summary": {
-    "headline": "Scan media before you trust it",
-    "intro": "clAIrity checks pictures, videos, audio, and text for signs that AI may have created or changed them. Results are written in plain language and show what to do next.",
+    "headline": "Audit the integrity state of a digital asset",
+    "intro": "Verax provides verifiable auditability for digital assets, ensuring transparency between source and consumption.",
     "currentScore": "74",
-    "currentStatus": "Use care",
-    "currentExplanation": "The post has a few visual and source clues that deserve a second look, but there is not enough evidence to call it AI-made."
+    "currentStatus": "Review required",
+    "currentExplanation": "The asset has source and media signals that require provenance review before downstream use."
   },
   "scanSamples": [
     {

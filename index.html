@@ -3,93 +3,134 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>clAIrity</title>
-    <link rel="icon" href="data:," />
+    <title>Verax</title>
+    <meta name="description" content="Verax helps you check links, files, and pasted text for AI editing or generation." />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Verax" />
+    <meta property="og:description" content="Check media in plain language and see what Verax found." />
+    <meta property="og:url" content="https://clairity-scan-companion.vercel.app/" />
+    <meta property="og:image" content="https://clairity-scan-companion.vercel.app/assets/verax-url-thumbnail.png" />
+    <meta property="og:image:secure_url" content="https://clairity-scan-companion.vercel.app/assets/verax-url-thumbnail.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Verax media check interface" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Verax" />
+    <meta name="twitter:description" content="Check media in plain language and see what Verax found." />
+    <meta name="twitter:image" content="https://clairity-scan-companion.vercel.app/assets/verax-url-thumbnail.png" />
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    <link rel="icon" type="image/png" href="assets/verax-icon-64.png" sizes="64x64" />
+    <link rel="apple-touch-icon" href="assets/verax-icon-192.png" />
     <link rel="stylesheet" href="assets/clarity.css" />
   </head>
-  <body>
+  <body class="verax-theme">
     <main class="app-frame">
       <header class="brand-row">
-        <div class="brand-lockup" aria-label="clAIrity">
-          <img class="brand-logo" src="assets/clairity-logo.svg" alt="" />
-          <span class="wordmark">cl<span class="word-ai">AI</span>rity</span>
+        <div class="brand-lockup" aria-label="Verax">
+          <img class="brand-logo" src="assets/verax-icon-512.png" alt="" />
+          <span class="wordmark verax-wordmark">VERAX</span>
         </div>
-        <nav class="screen-links" aria-label="clAIrity screens">
-          <a class="screen-link active" href="/">Scan</a>
-          <a class="screen-link" href="screens/scan-history.html">History</a>
+        <nav class="screen-links" aria-label="Verax screens">
+          <a class="screen-link active" href="/">Check</a>
+          <a class="screen-link" href="screens/scan-history.html">Saved checks</a>
           <a class="screen-link" href="screens/settings-privacy.html">Privacy</a>
-          <a class="screen-link" href="screens/floating-companion.html">Floating companion</a>
+          <a class="screen-link" href="screens/floating-companion.html">Browser tool</a>
         </nav>
       </header>
 
-      <div class="shell-grid">
+      <section class="verax-cover" aria-labelledby="cover-title">
+        <img src="assets/verax-cover.png" alt="" />
+        <div class="cover-copy">
+          <p class="protocol-kicker">Verax check</p>
+          <h1 id="cover-title">Check media before you trust or share it.</h1>
+          <p>
+            Paste a link, file, or text sample. Verax shows what looks off, what looks normal,
+            and what to do next.
+          </p>
+          <div class="cover-actions">
+            <a class="primary-btn" href="#audit-console">Check media</a>
+            <a class="secondary-btn" href="screens/floating-companion.html">Open browser tool</a>
+          </div>
+        </div>
+      </section>
+
+      <div class="shell-grid" id="audit-console">
         <aside class="sidebar" aria-label="Primary navigation">
-          <button class="nav-item active" type="button">Scan</button>
-          <a class="nav-item" href="screens/scan-history.html">History</a>
-          <a class="nav-item" href="screens/settings-privacy.html">Privacy settings</a>
-          <a class="nav-item" href="screens/floating-companion.html">Floating companion</a>
+          <button class="nav-item active" type="button">Check media</button>
+          <a class="nav-item" href="screens/scan-history.html">Saved checks</a>
+          <a class="nav-item" href="screens/settings-privacy.html">Privacy</a>
+          <a class="nav-item" href="screens/floating-companion.html">Browser tool</a>
         </aside>
 
         <section class="main-stack">
           <section class="scan-stage enhanced" aria-labelledby="scan-title">
             <div class="hero-copy">
-              <p class="pill">Command-center scan for posts, pages, files, and text</p>
-              <h1 id="scan-title">A cleaner read on what is real, edited, or unclear.</h1>
+              <p class="pill">Paste a link</p>
+              <h1 id="scan-title">Check this media.</h1>
               <p>
-                clAIrity works like a calm browser companion: paste a link, drop media,
-                or scan a page and get a simple safety reading with the clues arranged
-                in the order people should act on them.
+                Paste a link to a post, article, image, video, or audio clip. Verax explains
+                what it found in plain language and shows the next step.
               </p>
 
-              <div class="source-card" aria-label="Scan source options">
-                <div class="source-tabs" role="tablist" aria-label="Choose scan source">
-                  <button class="tab-button active" type="button" data-source="url">Web link</button>
-                  <button class="tab-button" type="button" data-source="upload">Upload media</button>
-                  <button class="tab-button" type="button" data-source="text">Paste text</button>
+              <div class="source-card" aria-label="Check source options">
+                <div class="source-tabs" role="tablist" aria-label="Choose check source">
+                  <button class="tab-button active" type="button" data-source="url">Link</button>
+                  <button class="tab-button" type="button" data-source="upload">File</button>
+                  <button class="tab-button" type="button" data-source="text">Text</button>
                 </div>
 
                 <form class="url-scan" id="scanForm" data-panel="url">
-                  <input id="scanInput" type="url" value="https://www.w3schools.com/html/default.asp" aria-label="Webpage or social post URL" />
-                  <button class="primary-btn" type="submit" data-scan-submit data-idle-label="Scan now">Scan now</button>
+                  <input id="scanInput" type="url" placeholder="Paste a link to a post, article, image, video, or audio clip" aria-label="Webpage or social post URL" />
+                  <button class="primary-btn" type="submit" data-scan-submit data-idle-label="Check media">Check media</button>
                 </form>
+
+                <div class="sample-chips" id="sampleChips" aria-label="Optional examples">
+                  <button class="sample-chip" type="button" data-sample="url">Social post</button>
+                  <button class="sample-chip" type="button" data-sample="url">News article</button>
+                  <button class="sample-chip" type="button" data-sample="url">Image URL</button>
+                  <button class="sample-chip" type="button" data-sample="url">Video link</button>
+                </div>
 
                 <form class="drop-zone notice-hidden" id="fileForm" data-panel="upload">
                   <div>
-                    <strong>Drop a photo, video, or audio clip</strong>
-                    <span>clAIrity reads image statistics and file metadata in your browser. Raw files are not saved.</span>
+                    <strong>Upload a file to check it</strong>
+                    <span>Verax reads browser-accessible metadata and image clues. Raw files are not kept on the server.</span>
                   </div>
-                  <label class="secondary-btn" for="fileInput">Choose file</label>
+                  <label class="secondary-btn" for="fileInput">Select asset</label>
                   <input class="file-input" id="fileInput" type="file" accept="image/*,video/*,audio/*" />
-                  <span class="file-name" id="fileName">No file selected</span>
-                  <button class="primary-btn" type="submit" data-scan-submit data-idle-label="Scan file">Scan file</button>
+                  <span class="file-name" id="fileName">No asset selected</span>
+                  <button class="secondary-btn" id="screenCapture" type="button">Capture screen image</button>
+                  <button class="primary-btn" type="submit" data-scan-submit data-idle-label="Check file">Check file</button>
                 </form>
 
                 <form class="notice-hidden" id="textForm" data-panel="text">
-                  <textarea class="paste-box" id="textInput" aria-label="Text to scan">This urgent story is spreading fast. Share before it disappears.</textarea>
-                  <button class="primary-btn stack-gap" type="submit" data-scan-submit data-idle-label="Scan text">Scan text</button>
+                  <textarea class="paste-box" id="textInput" aria-label="Text to check" placeholder="Paste text here to check what it says"></textarea>
+                  <button class="primary-btn stack-gap" type="submit" data-scan-submit data-idle-label="Check text">Check text</button>
                 </form>
 
-                <p id="scanMessage" class="pill">Ready · scan summaries stay local when privacy mode is on</p>
+                <p id="scanMessage" class="pill">Ready to check a link, file, or text sample.</p>
               </div>
             </div>
 
-            <aside class="score-panel result-stack" aria-label="Safety score">
+            <aside class="score-panel result-stack" aria-label="What Verax found">
               <div class="score-orb"><strong id="scoreValue">--</strong></div>
               <div class="score-status">
-                <h2 id="statusTitle">Ready</h2>
-                <span class="status-badge" id="statusBadge">0 clues</span>
+                <h2 id="statusTitle">Ready to check</h2>
+                <span class="status-badge" id="statusBadge">0 signals</span>
               </div>
-              <p id="plainSummary">Run a scan to see a real score and plain-language explanation.</p>
-              <button class="quiet-btn" id="copySummary" type="button">Copy simple summary</button>
-              <button class="secondary-btn" id="saveResult" type="button">Save to history</button>
+              <p id="plainSummary">Paste something above and Verax will explain what it found.</p>
+              <button class="quiet-btn" id="copySummary" type="button" data-ready-label="Copy result" disabled aria-describedby="resultActionsHelp">Copy result</button>
+              <button class="secondary-btn" id="saveResult" type="button" data-ready-label="Save check" disabled aria-describedby="resultActionsHelp">Save check</button>
+              <p class="fine-print" id="resultActionsHelp">Check media first to unlock copy and save.</p>
             </aside>
           </section>
 
           <section class="module" aria-labelledby="media-state-title">
             <div class="score-status">
               <div>
-                <p class="pill">Scan details</p>
-                <h2 id="media-state-title">Evidence and next step</h2>
+                <p class="pill">Why it looks this way</p>
+                <h2 id="media-state-title">Signals and next steps</h2>
               </div>
               <div class="media-tabs" role="tablist" aria-label="Result media type">
                 <button class="segment-button active" type="button" data-type="image">Image</button>
@@ -105,31 +146,31 @@
               </div>
 
               <div class="evidence-card">
-                <h3 id="detailTitle">No scan yet</h3>
-                <p id="detailCopy">Results appear here after a scan completes.</p>
+                <h3 id="detailTitle">No result yet</h3>
+                <p id="detailCopy">Signals appear here after you check something.</p>
                 <div class="timeline" id="detailSignals"></div>
-                <button class="secondary-btn" id="trustedSearch" type="button">Open trusted search</button>
+                <button class="secondary-btn" id="trustedSearch" type="button">Check elsewhere</button>
               </div>
             </div>
           </section>
 
-          <section class="evidence-grid" aria-label="App actions">
+          <section class="evidence-grid" aria-label="Protocol modules">
             <article class="module">
-              <h2>Local history</h2>
-              <p>Recent checks are grouped by concern level, so families can revisit confusing posts without storing the original media.</p>
-              <a class="secondary-btn full-width" href="screens/scan-history.html">Open history</a>
+              <h2>Saved checks</h2>
+              <p>Local records preserve the score, the explanation, and the next step without keeping the original media.</p>
+              <a class="secondary-btn full-width" href="screens/scan-history.html">Open saved checks</a>
             </article>
 
             <article class="module">
               <h2>Privacy controls</h2>
-              <p>Keep the default path simple: local summaries, short upload retention, and clear controls written in everyday language.</p>
+              <p>Choose whether Verax saves summaries, keeps uploads, or routes checks through another endpoint.</p>
               <a class="secondary-btn full-width" href="screens/settings-privacy.html">Open privacy</a>
             </article>
 
             <article class="module">
-              <h2>Floating companion</h2>
-              <p>A lightweight browser layer follows the page, scans selected text or media, and stays out of the way until needed.</p>
-              <a class="secondary-btn full-width" href="screens/floating-companion.html">Set up floating scan</a>
+              <h2>Browser tool</h2>
+              <p>The browser companion checks visible media on the current page and opens a plain-language result panel.</p>
+              <a class="secondary-btn full-width" href="screens/floating-companion.html">Open browser tool</a>
             </article>
           </section>
         </section>

@@ -6,9 +6,40 @@ function json(res, status, body) {
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
   res.setHeader('Cache-Control', 'no-store');
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   res.end(JSON.stringify(body));
+}
+
+function script(res, body) {
+  res.statusCode = 200;
+  res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+  res.setHeader('Cache-Control', 'no-store');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.end(body);
+}
+
+function validCallbackName(value) {
+  return /^[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*$/.test(String(value || ''));
+}
+
+function parseJsonpRequest(req) {
+  const requestUrl = new URL(req.url, 'https://clairity.local');
+  const callback = requestUrl.searchParams.get('callback') || '';
+  if (!validCallbackName(callback)) throw new Error('Invalid JSONP callback');
+
+  const rawPayload = requestUrl.searchParams.get('payload') || '{}';
+  if (rawPayload.length > 24000) throw new Error('Request too large');
+
+  try {
+    return { callback, payload: JSON.parse(rawPayload) };
+  } catch {
+    throw new Error('Invalid JSON');
+  }
+}
+
+function jsonp(res, callback, body) {
+  return script(res, `${callback}(${JSON.stringify(body)});`);
 }
 
 function normalizeBody(req) {
@@ -37,9 +68,9 @@ function clampScore(score) {
 }
 
 function statusFromScore(score) {
-  if (score >= 78) return { label: 'High concern', tone: 'concern' };
-  if (score >= 50) return { label: 'Use care', tone: 'care' };
-  return { label: 'Likely okay', tone: 'ok' };
+  if (score >= 78) return { label: 'High anomaly', tone: 'concern' };
+  if (score >= 50) return { label: 'Review required', tone: 'care' };
+  return { label: 'Low anomaly', tone: 'ok' };
 }
 
 function evidence(label, weight, detail) {
@@ -197,12 +228,12 @@ function detectSourceLanguage(text) {
 
 function summarizeSignals(signals) {
   if (!signals.length) {
-    return 'We did not find strong warning signs in this quick scan. Still check the source before sharing.';
+    return 'We did not find strong warning signs in this diagnostic audit. Still check the source before sharing.';
   }
   const supportive = signals.filter((item) => item.sentiment === 'supportive').slice(0, 2);
   const cautions = signals.filter((item) => item.sentiment !== 'supportive').slice(0, 2);
   if (supportive.length && !cautions.length) {
-    return `This looks low-risk in the quick scan: ${supportive.map((item) => item.label.toLowerCase()).join(' and ')}.`;
+    return `This looks low-risk in the diagnostic audit: ${supportive.map((item) => item.label.toLowerCase()).join(' and ')}.`;
   }
   const top = signals.slice(0, 2).map((item) => item.label.toLowerCase()).join(' and ');
   return `We noticed ${top}. That does not prove AI involvement, but it is worth checking before sharing.`;
@@ -218,7 +249,7 @@ async function fetchPageSnapshot(url) {
       redirect: 'follow',
       signal: controller.signal,
       headers: {
-        'User-Agent': 'clAIrity-preview-scanner/1.0'
+        'User-Agent': 'Verax-preview-auditor/1.0'
       }
     });
     metadata.httpStatus = response.status;
@@ -324,11 +355,11 @@ function scorePageProfile(snapshot, parsed, fetchError = '') {
       signals.push(pageEvidence('Media found', `${snapshot.images.length} image${snapshot.images.length === 1 ? '' : 's'} found`, 'Low', `${altCount} include alt/caption text. Media-heavy pages may need image-specific checking.`, snapshot.images.length > 12 ? 'caution' : 'supportive'));
     } else {
       metrics.mediaRisk -= 8;
-      signals.push(pageEvidence('Media found', 'No prominent images detected', 'Support', 'This scan is mostly about page/source context, not image manipulation.', 'supportive'));
+      signals.push(pageEvidence('Media found', 'No prominent images detected', 'Support', 'This audit is mostly about page/source context, not image manipulation.', 'supportive'));
     }
     if (snapshot.videoCount) {
       metrics.mediaRisk += 12;
-      signals.push(pageEvidence('Media found', 'Video or embedded player found', 'Medium', 'Video content may need frame/audio analysis beyond this page scan.'));
+      signals.push(pageEvidence('Media found', 'Video or embedded player found', 'Medium', 'Video content may need frame/audio analysis beyond this page audit.'));
     }
   }
 
@@ -371,13 +402,13 @@ function scorePageProfile(snapshot, parsed, fetchError = '') {
     title: 'Page purpose',
     detail: snapshot
       ? [snapshot.title && `Title: ${snapshot.title}`, snapshot.description && `Description: ${snapshot.description}`, snapshot.headings.length && `Headings sampled: ${snapshot.headings.slice(0, 4).join(' · ')}`].filter(Boolean).join(' ')
-      : 'clAIrity could not extract visible page content from the server-side scan.'
+      : 'Verax could not extract visible page content from the server-side audit.'
   });
   reportSections.push({
     title: 'Media and claims',
     detail: snapshot
       ? `${snapshot.images.length} image(s), ${snapshot.videoCount} video/player signal(s), ${snapshot.wordCount} visible words sampled.`
-      : 'Use the floating companion to scan visible text directly from the page if the server cannot read it.'
+      : 'Use the browser probe to audit visible text directly from the page if the server cannot read it.'
   });
 
   return { signals, reportSections, metrics, riskScore, hostType };
@@ -387,15 +418,15 @@ function summarizePageResult(status, profile, snapshot, parsed) {
   const hostType = profile.hostType;
   if (!snapshot) {
     if (status.tone === 'ok') {
-      return `${parsed.hostname} looks like ${articleFor(hostType)} ${hostType}, but clAIrity could not read the page content directly. Use the floating companion for a stronger scan of visible text and media.`;
+      return `${parsed.hostname} looks like ${articleFor(hostType)} ${hostType}, but Verax could not read the page content directly. Use the browser probe for a stronger audit of visible text and media.`;
     }
-    return `clAIrity could not read the page content directly from ${parsed.hostname}. The URL/context still suggests a cautious check, but use the floating companion for a stronger page scan.`;
+    return `Verax could not read the page content directly from ${parsed.hostname}. The URL/context still suggests a cautious check, but use the browser probe for a stronger page audit.`;
   }
   if (status.tone === 'ok') {
     if (hostType === 'educational reference' || hostType === 'reference') {
-      return 'This looks like a stable educational/reference page. We found HTTPS, readable structure, and no urgent sharing language. This scan does not verify every code example.';
+      return 'This looks like a stable educational/reference page. We found HTTPS, readable structure, and no urgent sharing language. This audit does not verify every code example.';
     }
-    return 'This page has several trust-supporting signals and no strong warning signs in the quick scan. Still check details before relying on it.';
+    return 'This page has several trust-supporting signals and no strong warning signs in the diagnostic audit. Still check details before relying on it.';
   }
   const caution = profile.signals.find((item) => item.sentiment !== 'supportive');
   const support = profile.signals.find((item) => item.sentiment === 'supportive');
@@ -404,7 +435,7 @@ function summarizePageResult(status, profile, snapshot, parsed) {
 
 async function analyzeUrl(payload) {
   const input = String(payload.content || payload.url || '').trim();
-  const limitations = ['Webpage scans can miss content that appears only after login, paywalls, or heavy scripts.'];
+  const limitations = ['Webpage audits can miss content that appears only after login, paywalls, or heavy scripts.'];
 
   let parsed;
   try {
@@ -415,7 +446,7 @@ async function analyzeUrl(payload) {
       label: 'Invalid web link',
       score: 70,
       signals: [evidence('The link could not be read', 'High', 'Enter a full URL such as https://example.com/story.')],
-      nextStep: 'Paste a full webpage or social post link and scan again.',
+      nextStep: 'Paste a full webpage or social post link and audit again.',
       limitations
     });
   }
@@ -484,7 +515,7 @@ function analyzeTextSignals(text) {
   }
   if (words.length < 8) {
     scoreDelta += 4;
-    signals.push(evidence('Very little text to check', 'Low', 'A short sample gives clAIrity fewer context clues.'));
+    signals.push(evidence('Very little text to check', 'Low', 'A short sample gives Verax fewer context clues.'));
   }
   if (/(as an ai|language model|chatgpt|generated)/i.test(safeText)) {
     scoreDelta += 18;
@@ -505,12 +536,12 @@ function analyzeText(payload) {
 
   return buildResult({
     type: 'text',
-    label: content.slice(0, 42) || 'Text scan',
+    label: content.slice(0, 42) || 'Text audit',
     score,
     signals: analysis.signals,
     nextStep: 'Search for a dated source from a trusted outlet before sharing the claim.',
     metadata: { length: content.length, words: content.trim().split(/\s+/).filter(Boolean).length },
-    limitations: ['Text scans check wording and source clues. They do not verify every factual claim.']
+    limitations: ['Text audits check wording and source clues. They do not verify every factual claim.']
   });
 }
 
@@ -533,7 +564,7 @@ function analyzeMedia(payload) {
     score += 10;
   }
   if (media.size && media.size > 40_000_000) {
-    signals.push(evidence('Large media file', 'Low', 'Large media may need a slower full scan for deeper frame/audio analysis.'));
+    signals.push(evidence('Large media file', 'Low', 'Large media may need a slower full audit for deeper frame/audio analysis.'));
     score += 3;
   }
   if (media.width && media.height) {
@@ -547,15 +578,20 @@ function analyzeMedia(payload) {
     }
   }
 
+  if (media.source === 'screen-capture') {
+    signals.push(evidence('Screen capture audited', 'Low', 'The image was sampled from a user-selected screen, tab, or window capture.'));
+    score += 3;
+  }
+
   if (mediaType === 'image' && media.visualStats) {
     const visual = media.visualStats;
     const hasStats = typeof visual.edgeDensity === 'number' && typeof visual.grayscaleRatio === 'number';
     if (hasStats) {
-      signals.push(evidence('Image pixels checked locally', 'Low', 'clAIrity used aggregate texture and color statistics from your browser, not the raw image.'));
+      signals.push(evidence('Image pixels checked locally', 'Low', 'Verax used aggregate texture and color statistics from your browser, not the raw image.'));
       score -= 4;
 
       if (visual.grayscaleRatio > 0.78 && visual.edgeDensity > 0.11 && visual.luminanceStd > 42) {
-        signals.push(evidence('Black-and-white photo texture', 'Low', 'The image has monochrome grain and contrast patterns that fit a scanned or archival photo.'));
+        signals.push(evidence('Black-and-white photo texture', 'Low', 'The image has monochrome grain and contrast patterns that fit a digitized or archival photo.'));
         score -= 18;
       } else if (visual.grayscaleRatio > 0.78) {
         signals.push(evidence('Mostly monochrome image', 'Low', 'Black-and-white images need source checks, but the color profile is not a synthetic-media warning by itself.'));
@@ -563,7 +599,7 @@ function analyzeMedia(payload) {
       }
 
       if (visual.edgeDensity > 0.18 && visual.luminanceStd > 48) {
-        signals.push(evidence('Natural detail variation', 'Low', 'The scan found varied edges and texture rather than a uniformly smooth surface.'));
+        signals.push(evidence('Natural detail variation', 'Low', 'The audit found varied edges and texture rather than a uniformly smooth surface.'));
         score -= 8;
       }
 
@@ -599,7 +635,7 @@ function analyzeMedia(payload) {
     score += 8;
   }
   if (mediaType === 'video') {
-    signals.push(evidence('Video needs frame-level follow-up', 'Medium', 'This MVP checks file metadata only. A deeper scan would sample frames and audio.'));
+    signals.push(evidence('Video needs frame-level follow-up', 'Medium', 'This MVP checks file metadata only. A deeper audit would sample frames and audio.'));
     score += 7;
   }
 
@@ -613,15 +649,15 @@ function analyzeMedia(payload) {
       : 'Look for the original post or source before sharing this media.',
     metadata: media,
     limitations: [media.visualStats
-      ? 'Upload scans use local pixel statistics and metadata. They are useful clues, not a definitive AI detector.'
-      : 'Upload scans in this MVP use browser-provided metadata only; raw files are not stored server-side.']
+      ? 'Upload audits use local pixel statistics and metadata. They are useful clues, not a definitive AI detector.'
+      : 'Upload audits in this MVP use browser-provided metadata only; raw files are not stored server-side.']
   });
 }
 
 function buildResult({ type, label, score, signals, summary, nextStep, metadata = {}, limitations = [] }) {
   const normalizedSignals = signals.length
     ? signals
-    : [evidence('No strong warning signs found', 'Low', 'The quick scan did not find strong concern signals.')];
+    : [evidence('No strong warning signs found', 'Low', 'The diagnostic audit did not find strong concern signals.')];
   const finalScore = clampScore(score);
   const status = statusFromScore(finalScore);
 
@@ -645,27 +681,43 @@ function buildResult({ type, label, score, signals, summary, nextStep, metadata 
   };
 }
 
+async function runScan(payload) {
+  const type = lower(payload.type || payload.sourceKind || 'text');
+
+  if (type === 'url' || type === 'link' || payload.url) {
+    return analyzeUrl(payload);
+  }
+  if (type === 'image' || type === 'video' || type === 'audio' || payload.media) {
+    return analyzeMedia(payload);
+  }
+  return analyzeText(payload);
+}
+
 module.exports = async function handler(req, res) {
   if (req.method === 'OPTIONS') return json(res, 204, {});
+
+  if (req.method === 'GET') {
+    let callback;
+    try {
+      const request = parseJsonpRequest(req);
+      callback = request.callback;
+      const result = await runScan(request.payload);
+      return jsonp(res, callback, { result });
+    } catch (error) {
+      if (callback) return jsonp(res, callback, { error: error.message || 'Audit failed' });
+      return script(res, '/* Invalid Verax JSONP request */');
+    }
+  }
+
   if (req.method !== 'POST') return json(res, 405, { error: 'Use POST /api/scan' });
 
   try {
     const payload = await normalizeBody(req);
-    const type = lower(payload.type || payload.sourceKind || 'text');
-    let result;
-
-    if (type === 'url' || type === 'link' || payload.url) {
-      result = await analyzeUrl(payload);
-    } else if (type === 'image' || type === 'video' || type === 'audio' || payload.media) {
-      result = analyzeMedia(payload);
-    } else {
-      result = analyzeText(payload);
-    }
-
+    const result = await runScan(payload);
     return json(res, 200, { result });
   } catch (error) {
     return json(res, error.message === 'Request too large' ? 413 : 400, {
-      error: error.message || 'Scan failed'
+      error: error.message || 'Audit failed'
     });
   }
 };

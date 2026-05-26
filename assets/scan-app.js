@@ -1,4 +1,5 @@
 import {
+  captureScreenImage,
   extractImageDimensions,
   extractImageStats,
   fileMetadata,
@@ -22,6 +23,7 @@ const els = {
   textInput: document.querySelector('#textInput'),
   fileInput: document.querySelector('#fileInput'),
   fileName: document.querySelector('#fileName'),
+  screenCapture: document.querySelector('#screenCapture'),
   message: document.querySelector('#scanMessage'),
   score: document.querySelector('#scoreValue'),
   status: document.querySelector('#statusTitle'),
@@ -34,6 +36,7 @@ const els = {
   textLines: document.querySelector('#textLines'),
   copy: document.querySelector('#copySummary'),
   save: document.querySelector('#saveResult'),
+  resultActionsHelp: document.querySelector('#resultActionsHelp'),
   search: document.querySelector('#trustedSearch')
 };
 
@@ -42,6 +45,34 @@ function setBusy(isBusy, label = 'Scanning...') {
     button.disabled = isBusy;
     button.textContent = isBusy ? label : button.dataset.idleLabel;
   });
+}
+
+function setResultActionsEnabled(enabled) {
+  [els.copy, els.save].forEach((button) => {
+    if (!button) return;
+    button.textContent = button.dataset.readyLabel || button.textContent;
+    button.disabled = !enabled;
+    button.setAttribute(
+      'aria-label',
+      enabled
+        ? button.dataset.readyLabel
+        : `${button.dataset.readyLabel} unavailable until you check media`
+    );
+  });
+  if (els.resultActionsHelp) {
+    els.resultActionsHelp.textContent = enabled
+      ? 'You can copy or save this check now.'
+      : 'Check media first to unlock copy and save.';
+  }
+}
+
+function setActionStatus(button, text, restoreAfter = 1400) {
+  if (!button) return;
+  const original = button.dataset.readyLabel || button.textContent;
+  button.textContent = text;
+  window.setTimeout(() => {
+    button.textContent = original;
+  }, restoreAfter);
 }
 
 function escapeHtml(value) {
@@ -68,10 +99,10 @@ function setPreview(type) {
 function metricLabel(key) {
   return {
     sourceConfidence: 'Source confidence',
-    contentRisk: 'Content risk',
-    mediaRisk: 'Media risk',
+    contentRisk: 'Content anomaly',
+    mediaRisk: 'Media anomaly',
     contextCompleteness: 'Context completeness',
-    scanConfidence: 'Scan confidence'
+    scanConfidence: 'Check coverage'
   }[key] || key;
 }
 
@@ -113,22 +144,45 @@ function renderResult(result, { autosaved = false } = {}) {
   state.currentResult = result;
   els.score.textContent = result.score;
   els.status.textContent = result.status;
-  els.badge.textContent = `${result.evidence.length} clue${result.evidence.length === 1 ? '' : 's'}`;
+  els.badge.textContent = `${result.evidence.length} signal${result.evidence.length === 1 ? '' : 's'}`;
   els.badge.className = `status-badge ${toneClass(result.tone)}`;
   els.summary.textContent = result.summary;
   els.detailTitle.textContent = result.label || `${readableType(result.type)} scan`;
   els.detailCopy.textContent = result.nextStep;
   setPreview(result.type);
   renderReport(result);
+  setResultActionsEnabled(true);
 
   els.message.textContent = autosaved
-    ? 'Scan complete · saved on this device'
-    : 'Scan complete · result shown only in this browser';
+    ? 'Check complete. Saved on this device.'
+    : 'Check complete. Kept in this browser.';
+}
+
+function decodeAuditPayload() {
+  const prefix = '#verax-audit=';
+  if (!location.hash.startsWith(prefix)) return null;
+  try {
+    const encoded = decodeURIComponent(location.hash.slice(prefix.length));
+    return JSON.parse(decodeURIComponent(escape(atob(encoded))));
+  } catch {
+    return null;
+  }
+}
+
+function selectSource(source) {
+  state.source = source;
+  document.querySelectorAll('[data-source]').forEach((item) => {
+    item.classList.toggle('active', item.dataset.source === source);
+  });
+  document.querySelectorAll('[data-panel]').forEach((panel) => {
+    panel.classList.toggle('notice-hidden', panel.dataset.panel !== source);
+  });
 }
 
 async function scan(payload) {
   setBusy(true);
-  els.message.textContent = 'Scanning without saving raw media...';
+  setResultActionsEnabled(false);
+  els.message.textContent = 'Checking without storing raw media...';
   try {
     const result = await runScan(payload);
     result.sourcePreview = payload.url || payload.content || payload.media?.name || '';
@@ -140,7 +194,7 @@ async function scan(payload) {
       renderResult(result);
     }
   } catch (error) {
-    els.message.textContent = error.message || 'Scan failed. Try again.';
+    els.message.textContent = error.message || 'Check failed. Try again.';
   } finally {
     setBusy(false);
   }
@@ -148,17 +202,20 @@ async function scan(payload) {
 
 document.querySelectorAll('[data-source]').forEach((button) => {
   button.addEventListener('click', () => {
-    state.source = button.dataset.source;
-    document.querySelectorAll('[data-source]').forEach((item) => item.classList.remove('active'));
-    button.classList.add('active');
-    document.querySelectorAll('[data-panel]').forEach((panel) => {
-      panel.classList.toggle('notice-hidden', panel.dataset.panel !== state.source);
-    });
+    selectSource(button.dataset.source);
     els.message.textContent = state.source === 'upload'
-      ? 'Ready to scan file metadata privately'
+      ? 'Ready to check a file privately'
       : state.source === 'text'
-        ? 'Ready to scan pasted text'
-        : 'Ready to scan a webpage or post';
+        ? 'Ready to check pasted text'
+        : 'Ready to check a link or post';
+  });
+});
+
+document.querySelectorAll('[data-sample]').forEach((button) => {
+  button.addEventListener('click', () => {
+    selectSource(button.dataset.sample);
+    els.urlInput.focus();
+    els.message.textContent = `Example: ${button.textContent}. Paste your own link to check it.`;
   });
 });
 
@@ -189,44 +246,85 @@ els.fileInput.addEventListener('change', () => {
 els.fileForm.addEventListener('submit', async (event) => {
   event.preventDefault();
   if (!state.selectedFile) {
-    els.message.textContent = 'Choose a file first.';
+    els.message.textContent = 'Select an asset first.';
     return;
   }
   setBusy(true, 'Reading...');
-  const dimensions = await extractImageDimensions(state.selectedFile).catch(() => ({}));
-  const visualStats = await extractImageStats(state.selectedFile).catch(() => ({}));
-  const metadata = fileMetadata(state.selectedFile, {
-    ...dimensions,
-    visualStats
-  });
-  const type = metadata.type.startsWith('audio/')
-    ? 'audio'
-    : metadata.type.startsWith('video/')
-      ? 'video'
-      : 'image';
-  setBusy(false);
-  scan({ type, media: metadata });
+  try {
+    const dimensions = await extractImageDimensions(state.selectedFile).catch(() => ({}));
+    const visualStats = await extractImageStats(state.selectedFile).catch(() => ({}));
+    const metadata = fileMetadata(state.selectedFile, {
+      ...dimensions,
+      visualStats
+    });
+    const type = metadata.type.startsWith('audio/')
+      ? 'audio'
+      : metadata.type.startsWith('video/')
+        ? 'video'
+        : 'image';
+    await scan({ type, media: metadata });
+  } finally {
+    setBusy(false);
+  }
+});
+
+els.screenCapture?.addEventListener('click', async () => {
+  setBusy(true, 'Capturing...');
+  els.message.textContent = 'Choose the tab, window, or screen area that contains the image.';
+  try {
+    const media = await captureScreenImage();
+    await scan({ type: 'image', media });
+  } catch (error) {
+    els.message.textContent = error.message || 'Screen capture was cancelled.';
+  } finally {
+    setBusy(false);
+  }
 });
 
 els.copy.addEventListener('click', async () => {
   if (!state.currentResult) return;
-  await navigator.clipboard?.writeText(`clAIrity says: ${state.currentResult.status}. ${state.currentResult.summary} Next: ${state.currentResult.nextStep}`);
-  els.copy.textContent = 'Summary copied';
-  setTimeout(() => {
-    els.copy.textContent = 'Copy simple summary';
-  }, 1600);
+  const text = `Verax check: ${state.currentResult.status}. ${state.currentResult.summary} Next step: ${state.currentResult.nextStep}`;
+  try {
+    if (!navigator.clipboard?.writeText) {
+      throw new Error('Clipboard unavailable');
+    }
+    await navigator.clipboard.writeText(text);
+    els.message.textContent = 'Result copied to clipboard.';
+    setActionStatus(els.copy, 'Copied');
+  } catch {
+    els.message.textContent = 'Copy failed. Try again.';
+  }
 });
 
 els.save.addEventListener('click', async () => {
   if (!state.currentResult) {
-    els.message.textContent = 'Run a scan first.';
+    els.message.textContent = 'Check media first.';
     return;
   }
   await saveScan(state.currentResult);
-  els.message.textContent = 'Saved to history on this device';
+  els.message.textContent = 'Check saved on this device.';
+  setActionStatus(els.save, 'Saved');
 });
 
 els.search.addEventListener('click', () => {
-  const query = encodeURIComponent(state.currentResult?.label || els.urlInput.value || 'trusted source check');
+  const query = encodeURIComponent(state.currentResult?.label || els.urlInput.value || 'media check');
   window.open(`https://www.google.com/search?q=${query}`, '_blank', 'noopener,noreferrer');
 });
+
+const auditPayload = decodeAuditPayload();
+if (auditPayload) {
+  if (auditPayload.type === 'text') {
+    selectSource('text');
+    els.textInput.value = auditPayload.content || '';
+  } else if (auditPayload.media || ['image', 'video', 'audio'].includes(auditPayload.type)) {
+    selectSource('upload');
+    els.fileName.textContent = auditPayload.media?.name || 'Captured screen image';
+  } else {
+    selectSource('url');
+    els.urlInput.value = auditPayload.url || auditPayload.content || '';
+  }
+  history.replaceState(null, '', location.pathname + location.search);
+  scan(auditPayload);
+}
+
+setResultActionsEnabled(false);

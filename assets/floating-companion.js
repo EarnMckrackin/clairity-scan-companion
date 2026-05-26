@@ -5,8 +5,16 @@
   }
 
   const currentScript = document.currentScript;
-  const origin = currentScript?.dataset?.clairityOrigin || 'https://clairity-scan-companion.vercel.app';
+  const origin = currentScript?.dataset?.clairityOrigin || window.__clairityOrigin || 'https://clairity-scan-companion.vercel.app';
   const root = document.createElement('aside');
+  const logo = `
+    <svg viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+      <circle cx="32" cy="32" r="28" fill="#101820"/>
+      <path d="M32 9l7.8 15.6L56 32l-16.2 7.4L32 55l-7.8-15.6L8 32l16.2-7.4L32 9z" fill="#f1c45b"/>
+      <circle cx="32" cy="32" r="8" fill="#f8fbfc"/>
+      <path d="M32 18v28M18 32h28" stroke="#101820" stroke-width="3" stroke-linecap="round"/>
+    </svg>
+  `;
   const state = {
     dragging: false,
     startX: 0,
@@ -18,20 +26,21 @@
   root.id = 'clairity-floating-companion';
   root.innerHTML = `
     <div class="clairity-float-head" data-drag-handle>
-      <strong>cl<span>AI</span>rity</strong>
-      <button type="button" data-close aria-label="Close clAIrity">×</button>
+      <strong>${logo}<span>VERAX</span></strong>
+      <button type="button" data-close aria-label="Close Verax">×</button>
     </div>
     <div class="clairity-float-score">
       <b data-score>--</b>
       <div>
         <h2 data-status>Ready</h2>
-        <p data-summary>Scan this page, selected text, or the page URL while you browse.</p>
+        <p data-summary>Audit this page, selected text, or the page URL while you browse.</p>
       </div>
     </div>
     <div class="clairity-float-actions">
-      <button type="button" data-scan-page>Scan page text</button>
-      <button type="button" data-scan-selection>Scan selection</button>
-      <button type="button" data-scan-url>Scan URL</button>
+      <button type="button" data-scan-page>Audit page text</button>
+      <button type="button" data-scan-selection>Audit selection</button>
+      <button type="button" data-scan-url>Audit URL</button>
+      <button type="button" data-capture-screen>Audit screen capture</button>
     </div>
     <div class="clairity-float-evidence" data-evidence></div>
   `;
@@ -47,10 +56,10 @@
       max-height: min(680px, calc(100vh - 24px));
       overflow: auto;
       border: 1px solid #dbe5ea;
-      border-radius: 18px;
-      background: rgba(255,255,255,.98);
-      color: #17212b;
-      box-shadow: 0 24px 80px rgba(15,23,42,.22);
+      border-radius: 14px;
+      background: rgba(246,250,252,.98);
+      color: #101820;
+      box-shadow: 0 24px 80px rgba(2,7,11,.26);
       font: 14px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       padding: 14px;
       box-sizing: border-box;
@@ -65,14 +74,20 @@
       user-select: none;
       margin-bottom: 12px;
     }
-    #clairity-floating-companion strong { font-size: 18px; }
-    #clairity-floating-companion strong span {
-      border-radius: 9px;
-      padding: 2px 5px;
-      background: linear-gradient(135deg, #1fa58d, #438ee6);
-      color: white;
-      font-weight: 900;
+    #clairity-floating-companion strong {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      font-size: 18px;
+      letter-spacing: .14em;
     }
+    #clairity-floating-companion strong svg {
+      width: 28px;
+      height: 28px;
+      flex: 0 0 auto;
+      filter: drop-shadow(0 6px 12px rgba(229,170,0,.22));
+    }
+
     #clairity-floating-companion [data-close] {
       width: 34px;
       height: 34px;
@@ -110,8 +125,8 @@
     #clairity-floating-companion .clairity-float-actions button {
       min-height: 40px;
       border: 0;
-      border-radius: 12px;
-      background: #15222a;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #101820, #2d4655);
       color: white;
       font-weight: 800;
       cursor: pointer;
@@ -196,7 +211,7 @@
   }
 
   function setBusy(label) {
-    root.querySelector('[data-status]').textContent = 'Scanning...';
+    root.querySelector('[data-status]').textContent = 'Auditing...';
     root.querySelector('[data-summary]').textContent = label;
   }
 
@@ -211,12 +226,208 @@
 
   function renderError(error) {
     root.querySelector('[data-score]').textContent = '!';
-    root.querySelector('[data-status]').textContent = 'Could not scan';
+    root.querySelector('[data-status]').textContent = 'Could not audit';
     root.querySelector('[data-summary]').textContent = error.message || 'Try again from the web app.';
   }
 
-  async function scan(payload, busyLabel) {
+  function compactSnapshot(snapshot) {
+    if (!snapshot) return null;
+    return {
+      ...snapshot,
+      text: String(snapshot.text || '').slice(0, 4200),
+      headings: (snapshot.headings || []).slice(0, 10),
+      links: (snapshot.links || []).slice(0, 24),
+      images: (snapshot.images || []).slice(0, 18).map((image) => ({
+        src: image.src,
+        alt: String(image.alt || '').slice(0, 120),
+        width: image.width,
+        height: image.height
+      }))
+    };
+  }
+
+  function compactPayload(payload) {
+    const compact = {
+      ...payload,
+      content: String(payload.content || '').slice(0, 4200)
+    };
+    if (payload.pageSnapshot) compact.pageSnapshot = compactSnapshot(payload.pageSnapshot);
+    return compact;
+  }
+
+  function strictHostRequiresApp() {
+    return /(^|\.)x\.com$|(^|\.)twitter\.com$/i.test(location.hostname);
+  }
+
+  function encodePayload(payload) {
+    return btoa(unescape(encodeURIComponent(JSON.stringify(compactPayload(payload)))));
+  }
+
+  function openInApp(payload, targetWindow) {
+    const url = `${origin}/screens/web-scan.html#verax-audit=${encodeURIComponent(encodePayload(payload))}`;
+    if (targetWindow && !targetWindow.closed) {
+      targetWindow.location.href = url;
+      return;
+    }
+    window.open(url, '_blank', 'noopener,noreferrer');
+  }
+
+  function renderOpenedInApp() {
+    root.querySelector('[data-score]').textContent = '↗';
+    root.querySelector('[data-status]').textContent = 'Opened in Verax';
+    root.querySelector('[data-summary]').textContent = 'This site blocks in-page audit requests, so Verax opened the audit in the main app.';
+    root.querySelector('[data-evidence]').innerHTML = '';
+  }
+
+  function extractCanvasStats(canvas) {
+    const width = canvas.width;
+    const height = canvas.height;
+    const context = canvas.getContext('2d', { willReadFrequently: true });
+    const { data } = context.getImageData(0, 0, width, height);
+    const luminance = new Float32Array(width * height);
+    let lumaSum = 0;
+    let lumaSq = 0;
+    let saturationSum = 0;
+    let channelDiffSum = 0;
+    let grayscalePixels = 0;
+
+    for (let i = 0, p = 0; i < data.length; i += 4, p += 1) {
+      const r = data[i] / 255;
+      const g = data[i + 1] / 255;
+      const b = data[i + 2] / 255;
+      const max = Math.max(r, g, b);
+      const min = Math.min(r, g, b);
+      const luma = (0.2126 * r + 0.7152 * g + 0.0722 * b) * 255;
+      const saturation = max === 0 ? 0 : (max - min) / max;
+      const channelDiff = (Math.abs(r - g) + Math.abs(g - b) + Math.abs(r - b)) / 3;
+      luminance[p] = luma;
+      lumaSum += luma;
+      lumaSq += luma * luma;
+      saturationSum += saturation;
+      channelDiffSum += channelDiff;
+      if (channelDiff < 0.035) grayscalePixels += 1;
+    }
+
+    let edgeHits = 0;
+    let smoothHits = 0;
+    let neighborComparisons = 0;
+    let highContrastHits = 0;
+    for (let y = 0; y < height - 1; y += 1) {
+      for (let x = 0; x < width - 1; x += 1) {
+        const p = y * width + x;
+        const diff = Math.max(Math.abs(luminance[p] - luminance[p + 1]), Math.abs(luminance[p] - luminance[p + width]));
+        neighborComparisons += 1;
+        if (diff > 24) edgeHits += 1;
+        if (diff < 4) smoothHits += 1;
+        if (diff > 62) highContrastHits += 1;
+      }
+    }
+
+    const pixels = width * height;
+    const mean = lumaSum / pixels;
+    const variance = Math.max(0, lumaSq / pixels - mean * mean);
+
+    return {
+      sampleWidth: width,
+      sampleHeight: height,
+      grayscaleRatio: Number((grayscalePixels / pixels).toFixed(3)),
+      meanLuminance: Number(mean.toFixed(1)),
+      luminanceStd: Number(Math.sqrt(variance).toFixed(1)),
+      saturationMean: Number((saturationSum / pixels).toFixed(3)),
+      channelDiffMean: Number((channelDiffSum / pixels).toFixed(3)),
+      edgeDensity: Number((edgeHits / Math.max(1, neighborComparisons)).toFixed(3)),
+      smoothness: Number((smoothHits / Math.max(1, neighborComparisons)).toFixed(3)),
+      highContrastDensity: Number((highContrastHits / Math.max(1, neighborComparisons)).toFixed(3))
+    };
+  }
+
+  async function captureScreenImage() {
+    if (!navigator.mediaDevices?.getDisplayMedia) {
+      throw new Error('Screen capture is not available in this browser.');
+    }
+
+    const stream = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 1 }, audio: false });
+    const video = document.createElement('video');
+    try {
+      video.srcObject = stream;
+      video.muted = true;
+      video.playsInline = true;
+      await video.play();
+      await new Promise((resolve) => {
+        if (video.videoWidth && video.videoHeight) {
+          resolve();
+          return;
+        }
+        video.onloadedmetadata = resolve;
+      });
+
+      const maxSample = 1280;
+      const scale = Math.min(maxSample / video.videoWidth, maxSample / video.videoHeight, 1);
+      const width = Math.max(1, Math.round(video.videoWidth * scale));
+      const height = Math.max(1, Math.round(video.videoHeight * scale));
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      canvas.getContext('2d', { willReadFrequently: true }).drawImage(video, 0, 0, width, height);
+
+      return {
+        name: `verax-screenshot-${new Date().toISOString().replace(/[:.]/g, '-')}.png`,
+        type: 'image/png',
+        size: Math.round(width * height * 4),
+        width,
+        height,
+        lastModified: new Date().toISOString(),
+        lastModifiedAgeDays: 0,
+        source: 'screen-capture',
+        visualStats: extractCanvasStats(canvas)
+      };
+    } finally {
+      stream.getTracks().forEach((track) => track.stop());
+    }
+  }
+
+  function scanViaScript(payload) {
+    return new Promise((resolve, reject) => {
+      const callbackName = `__clairityScan${Date.now()}${Math.random().toString(16).slice(2)}`;
+      const callback = `window.${callbackName}`;
+      const script = document.createElement('script');
+      const timeout = window.setTimeout(() => {
+        cleanup();
+        reject(new Error('Audit timed out'));
+      }, 12000);
+
+      function cleanup() {
+        window.clearTimeout(timeout);
+        delete window[callbackName];
+        script.remove();
+      }
+
+      window[callbackName] = (data) => {
+        cleanup();
+        if (data?.error) {
+          reject(new Error(data.error));
+          return;
+        }
+        resolve(data);
+      };
+
+      script.onerror = () => {
+        cleanup();
+        reject(new Error('The page blocked the audit request'));
+      };
+
+      script.src = `${origin}/api/scan?callback=${encodeURIComponent(callback)}&payload=${encodeURIComponent(JSON.stringify(compactPayload(payload)))}`;
+      document.documentElement.append(script);
+    });
+  }
+
+  async function scan(payload, busyLabel, options = {}) {
     setBusy(busyLabel);
+    if (strictHostRequiresApp()) {
+      openInApp(payload, options.fallbackWindow);
+      renderOpenedInApp();
+      return;
+    }
     try {
       const response = await fetch(`${origin}/api/scan`, {
         method: 'POST',
@@ -224,10 +435,20 @@
         body: JSON.stringify(payload)
       });
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'Scan failed');
+      if (!response.ok) throw new Error(data.error || 'Audit failed');
       render(data.result);
     } catch (error) {
-      renderError(error);
+      try {
+        const data = await scanViaScript(payload);
+        render(data.result);
+      } catch (fallbackError) {
+        if (options.fallbackWindow || fallbackError.message === 'The page blocked the audit request') {
+          openInApp(payload, options.fallbackWindow);
+          renderOpenedInApp();
+          return;
+        }
+        renderError(error);
+      }
     }
   }
 
@@ -251,6 +472,7 @@
 
   root.addEventListener('pointerdown', (event) => {
     if (!event.target.closest('[data-drag-handle]')) return;
+    if (event.target.closest('button, a, input, textarea, select')) return;
     state.dragging = true;
     state.startX = event.clientX - root.getBoundingClientRect().left;
     state.startY = event.clientY - root.getBoundingClientRect().top;
@@ -263,8 +485,19 @@
   root.addEventListener('pointerup', () => {
     state.dragging = false;
   });
+  root.addEventListener('pointercancel', () => {
+    state.dragging = false;
+  });
 
-  root.querySelector('[data-close]').addEventListener('click', () => root.remove());
+  root.querySelector('[data-close]').addEventListener('pointerdown', (event) => {
+    event.stopPropagation();
+  });
+  root.querySelector('[data-close]').addEventListener('click', (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    state.dragging = false;
+    root.remove();
+  });
   root.querySelector('[data-scan-page]').addEventListener('click', () => {
     scan({ type: 'url', url: location.href, content: location.href, pageSnapshot: pageSnapshot() }, 'Reading page structure...');
   });
@@ -273,6 +506,17 @@
   });
   root.querySelector('[data-scan-url]').addEventListener('click', () => {
     scan({ type: 'url', url: location.href, content: location.href }, 'Checking page URL...');
+  });
+  root.querySelector('[data-capture-screen]').addEventListener('click', async () => {
+    const fallbackWindow = strictHostRequiresApp() ? window.open('about:blank', '_blank') : null;
+    setBusy('Choose the tab, window, or screen area that contains the image.');
+    try {
+      const media = await captureScreenImage();
+      scan({ type: 'image', media }, 'Checking captured image texture...', { fallbackWindow });
+    } catch (error) {
+      if (fallbackWindow && !fallbackWindow.closed) fallbackWindow.close();
+      renderError(error);
+    }
   });
 
   window.__clairityFloating = {

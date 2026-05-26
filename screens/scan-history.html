@@ -3,39 +3,57 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>clAIrity Scan History</title>
-    <link rel="icon" href="data:," />
+    <title>Verax Saved Checks</title>
+    <meta name="description" content="Verax helps you review previous checks without keeping the original media." />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Verax" />
+    <meta property="og:description" content="Review previous checks without keeping the original media." />
+    <meta property="og:url" content="https://clairity-scan-companion.vercel.app/" />
+    <meta property="og:image" content="https://clairity-scan-companion.vercel.app/assets/verax-url-thumbnail.png" />
+    <meta property="og:image:secure_url" content="https://clairity-scan-companion.vercel.app/assets/verax-url-thumbnail.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Verax media check interface" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Verax" />
+    <meta name="twitter:description" content="Review previous checks without keeping the original media." />
+    <meta name="twitter:image" content="https://clairity-scan-companion.vercel.app/assets/verax-url-thumbnail.png" />
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    <link rel="icon" type="image/png" href="../assets/verax-icon-64.png" sizes="64x64" />
+    <link rel="icon" type="image/png" href="../assets/verax-icon-512.png" />
+    <link rel="apple-touch-icon" href="../assets/verax-icon-192.png" />
     <link rel="stylesheet" href="../assets/clarity.css" />
   </head>
-  <body>
+  <body class="verax-theme">
     <main class="app-frame">
       <header class="brand-row">
-        <div class="brand-lockup" aria-label="clAIrity">
-          <img class="brand-logo" src="../assets/clairity-logo.svg" alt="" />
-          <span class="wordmark">cl<span class="word-ai">AI</span>rity</span>
+        <div class="brand-lockup" aria-label="Verax">
+          <img class="brand-logo" src="../assets/verax-icon-512.png" alt="" />
+          <span class="wordmark verax-wordmark">VERAX</span>
         </div>
-        <nav class="screen-links" aria-label="clAIrity screens">
-          <a class="screen-link" href="web-scan.html">Scan</a>
-          <a class="screen-link active" href="scan-history.html">History</a>
+        <nav class="screen-links" aria-label="Verax screens">
+          <a class="screen-link" href="web-scan.html">Check</a>
+          <a class="screen-link active" href="scan-history.html">Saved checks</a>
           <a class="screen-link" href="settings-privacy.html">Privacy</a>
-          <a class="screen-link" href="floating-companion.html">Floating companion</a>
+          <a class="screen-link" href="floating-companion.html">Browser tool</a>
         </nav>
       </header>
 
       <section class="scan-stage">
         <div class="hero-copy">
-          <p class="pill">Saved scans</p>
-          <h1>Review what you checked, without keeping the original media.</h1>
+          <p class="pill">Saved checks</p>
+          <h1>Review previous checks without keeping the original media.</h1>
           <p>
-            History keeps the plain-language result, score, and next step. Private uploads
-            can be removed automatically while the helpful summary stays available.
+            Saved checks keep the score, explanation, and next step. Private uploads can be removed
+            automatically while the summary remains available.
           </p>
         </div>
         <aside class="score-panel">
           <div class="score-orb"><strong id="historyTotal">0</strong></div>
           <div>
-            <h2>Scans this week</h2>
-            <p><span id="reviewCount">0</span> local scans currently need a second look.</p>
+            <h2>Checks this week</h2>
+            <p><span id="reviewCount">0</span> saved checks currently need review.</p>
           </div>
         </aside>
       </section>
@@ -49,21 +67,21 @@
 
           <div class="history-filters" aria-label="History filters">
             <button class="segment-button active" type="button" data-filter="all">All</button>
-            <button class="segment-button" type="button" data-filter="care">Use care</button>
-            <button class="segment-button" type="button" data-filter="concern">High concern</button>
-            <button class="segment-button" type="button" data-filter="ok">Likely okay</button>
+            <button class="segment-button" type="button" data-filter="care">Review required</button>
+            <button class="segment-button" type="button" data-filter="concern">High anomaly</button>
+            <button class="segment-button" type="button" data-filter="ok">Low anomaly</button>
           </div>
 
-          <p class="empty-state" id="emptyHistory">No local scans saved yet. Run a scan to build history in this browser.</p>
+          <p class="empty-state" id="emptyHistory">No checks saved yet. Run a check to build a history in this browser.</p>
           <div id="historyList"></div>
-          <button class="secondary-btn stack-gap" id="clearHistory" type="button">Clear local history</button>
+          <button class="secondary-btn stack-gap" id="clearHistory" type="button">Clear saved checks</button>
         </article>
 
         <aside class="history-card">
-          <h2>Family review queue</h2>
+          <h2>Review queue</h2>
           <p>Saved items can be grouped for a parent, teacher, or trusted helper.</p>
           <div class="signal-list">
-            <div class="signal"><span class="signal-dot">1</span><p>Use the filters to find scans that need more checking.</p></div>
+            <div class="signal"><span class="signal-dot">1</span><p>Use the filters to find checks that require review.</p></div>
             <div class="signal"><span class="signal-dot">2</span><p>Open the scan page to copy a plain-language summary.</p></div>
             <div class="signal"><span class="signal-dot">3</span><p>Clear local history any time from this browser.</p></div>
           </div>

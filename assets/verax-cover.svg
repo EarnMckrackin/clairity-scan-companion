@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 900" role="img" aria-labelledby="title desc">
+  <title id="title">Verax verification cover</title>
+  <desc id="desc">A protocol dashboard auditing a digital sculpture beside the Verax compass mark.</desc>
+  <defs>
+    <linearGradient id="room" x1="0" y1="120" x2="1800" y2="840" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#111b25"/>
+      <stop offset="0.36" stop-color="#dbe5e8"/>
+      <stop offset="0.66" stop-color="#f7fbfc"/>
+      <stop offset="1" stop-color="#b3c1c7"/>
+    </linearGradient>
+    <linearGradient id="panel" x1="178" y1="168" x2="1010" y2="752" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#1b2732"/>
+      <stop offset="1" stop-color="#071018"/>
+    </linearGradient>
+    <linearGradient id="scan" x1="574" y1="170" x2="586" y2="732" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#43caff" stop-opacity="0"/>
+      <stop offset="0.5" stop-color="#7ee8ff"/>
+      <stop offset="1" stop-color="#43caff" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="softShadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="22" stdDeviation="22" flood-color="#02070b" flood-opacity="0.28"/>
+    </filter>
+    <filter id="glow" x="-80%" y="-80%" width="260%" height="260%">
+      <feGaussianBlur stdDeviation="7" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <rect width="1800" height="900" fill="url(#room)"/>
+  <rect x="0" y="0" width="1800" height="900" fill="#dbe5e8" opacity="0.28"/>
+  <path d="M0 820h1800" stroke="#f8fdff" stroke-width="9" opacity="0.85"/>
+  <path d="M1040 132h470" stroke="#f7fbff" stroke-width="17" stroke-linecap="round" opacity="0.92"/>
+  <path d="M420 82h672" stroke="#f7fbff" stroke-width="17" stroke-linecap="round" opacity="0.9"/>
+  <rect x="165" y="150" width="925" height="610" rx="34" fill="url(#panel)" filter="url(#softShadow)"/>
+  <rect x="165" y="150" width="925" height="64" rx="34" fill="#1f2c38"/>
+  <circle cx="205" cy="184" r="10" fill="#fa6e61"/>
+  <circle cx="229" cy="184" r="10" fill="#f4b35c"/>
+  <circle cx="253" cy="184" r="10" fill="#4cc870"/>
+  <text x="286" y="192" fill="#aebbc3" font-family="Avenir Next, Rajdhani, Arial, sans-serif" font-size="22" font-weight="700">VERAX</text>
+  <text x="198" y="266" fill="#e9f1f3" font-family="Avenir Next, Rajdhani, Arial, sans-serif" font-size="46" font-weight="800" letter-spacing="2">VERAX</text>
+  <text x="340" y="268" fill="#8ea0aa" font-family="Avenir Next, Rajdhani, Arial, sans-serif" font-size="23">v3.1 | Diagnostic Standard</text>
+  <g stroke="#6f8794" stroke-width="2" opacity="0.72">
+    <path d="M342 540l178-186 198 64 117-76"/>
+    <path d="M342 540l250 112 243-310"/>
+    <path d="M520 354l72 298"/>
+    <path d="M430 454h382v152H430z"/>
+    <path d="M510 412l120-48 120 50v170l-120 52-120-54z"/>
+  </g>
+  <g fill="#74dff4" stroke="#19303d" stroke-width="3">
+    <circle cx="342" cy="540" r="11"/>
+    <circle cx="520" cy="354" r="12"/>
+    <circle cx="592" cy="652" r="14"/>
+    <circle cx="835" cy="342" r="11"/>
+  </g>
+  <g fill="#f4a64c" filter="url(#glow)">
+    <circle cx="430" cy="454" r="9"/>
+    <circle cx="812" cy="606" r="9"/>
+    <circle cx="718" cy="418" r="8"/>
+  </g>
+  <path d="M580 232v455" stroke="url(#scan)" stroke-width="10" filter="url(#glow)"/>
+  <g transform="translate(430 308)" filter="url(#softShadow)">
+    <path d="M165 14c-55 12-95 48-112 101-22 69 11 147 75 178 34 16 75 18 116 6 37-11 61-28 82-56 28-36 35-80 19-122-18-50-66-94-124-108-17-4-39-4-56 1z" fill="#d9d6ce"/>
+    <path d="M177 48c-35 5-61 23-78 54 21-15 38-19 57-14-25 20-40 39-46 62 24-14 47-16 71-6-12 28-12 62-2 93 29 8 61 4 88-10 30-16 45-42 49-78 4-38-11-70-43-91-27-18-61-15-96-10z" fill="#f0eee7"/>
+    <path d="M117 224c34 43 99 55 147 28" fill="none" stroke="#9da3a4" stroke-width="12" stroke-linecap="round"/>
+    <path d="M143 122c31-42 93-45 128-8" fill="none" stroke="#bfc4c3" stroke-width="11" stroke-linecap="round"/>
+    <path d="M119 301h190l-35 78H150z" fill="#c5c4bd"/>
+  </g>
+  <g font-family="Avenir Next, Rajdhani, Arial, sans-serif" font-size="23">
+    <rect x="800" y="330" width="190" height="72" rx="9" fill="#2a3945" stroke="#526474"/>
+    <text x="820" y="362" fill="#d6e1e5">METADATA INTEGRITY:</text>
+    <text x="820" y="390" fill="#74e6a2" font-weight="800">VERIFIED</text>
+    <rect x="802" y="472" width="190" height="72" rx="9" fill="#2a3945" stroke="#526474"/>
+    <text x="822" y="504" fill="#d6e1e5">GAN FINGERPRINT:</text>
+    <text x="822" y="532" fill="#f3a94d" font-weight="800">12% INCONSISTENT</text>
+    <rect x="800" y="616" width="204" height="72" rx="9" fill="#2a3945" stroke="#526474"/>
+    <text x="820" y="648" fill="#d6e1e5">PROVENANCE ANCHOR:</text>
+    <text x="820" y="676" fill="#f3a94d" font-weight="800">88% CONFIDENCE</text>
+  </g>
+  <g transform="translate(1160 220) scale(1.05)">
+    <use href="#veraxSymbol"/>
+  </g>
+  <defs>
+    <g id="veraxSymbol">
+      <circle cx="238" cy="218" r="155" fill="none" stroke="#1b2a35" stroke-width="22"/>
+      <circle cx="238" cy="218" r="118" fill="none" stroke="#7c8e98" stroke-width="8" opacity="0.55"/>
+      <path d="M238 25l34 158 152 35-152 35-34 158-34-158-152-35 152-35z" fill="#d9e7ec" stroke="#101922" stroke-width="11" stroke-linejoin="round"/>
+      <path d="M92 360l139-154 154-133-139 154z" fill="#9ce8fb" stroke="#8deeff" stroke-width="8" stroke-linejoin="round"/>
+      <circle cx="238" cy="218" r="40" fill="#101922" stroke="#f5fbfd" stroke-width="8"/>
+      <circle cx="238" cy="218" r="22" fill="#bbf6ff"/>
+      <g fill="#f2a54f" stroke="#20313e" stroke-width="7">
+        <circle cx="123" cy="180" r="15"/>
+        <circle cx="154" cy="310" r="15"/>
+        <circle cx="338" cy="160" r="15"/>
+        <circle cx="360" cy="294" r="15"/>
+      </g>
+      <text x="238" y="530" text-anchor="middle" fill="#111923" font-family="Avenir Next, Rajdhani, Arial, sans-serif" font-size="90" font-weight="900" letter-spacing="8">VERAX</text>
+    </g>
+  </defs>
+</svg>
