@@ -149,6 +149,52 @@
     return [document.title, location.href, article || body].filter(Boolean).join('\\n\\n').slice(0, 10000);
   }
 
+  function meta(selector) {
+    return document.querySelector(selector)?.getAttribute('content') || '';
+  }
+
+  function pageSnapshot() {
+    const canonical = document.querySelector('link[rel="canonical"]')?.href || location.href;
+    const article = document.querySelector('article')?.innerText || '';
+    const main = document.querySelector('main')?.innerText || '';
+    const body = document.body?.innerText || '';
+    const text = (article || main || body || '').replace(/\s+/g, ' ').trim().slice(0, 24000);
+    const headings = [...document.querySelectorAll('h1, h2, h3')]
+      .map((item) => item.innerText.replace(/\s+/g, ' ').trim())
+      .filter(Boolean)
+      .slice(0, 14);
+    const links = [...document.querySelectorAll('a[href]')]
+      .map((item) => item.href)
+      .filter(Boolean)
+      .slice(0, 160);
+    const images = [...document.querySelectorAll('img')]
+      .map((image) => ({
+        src: image.currentSrc || image.src,
+        alt: image.alt || '',
+        width: image.naturalWidth || image.width || null,
+        height: image.naturalHeight || image.height || null
+      }))
+      .filter((image) => image.src || image.alt)
+      .slice(0, 80);
+
+    return {
+      source: 'floating-companion',
+      url: location.href,
+      title: document.title,
+      description: meta('meta[name="description"]') || meta('meta[property="og:description"]'),
+      canonical,
+      author: meta('meta[name="author"]') || meta('meta[property="article:author"]'),
+      publishedTime: meta('meta[property="article:published_time"]') || meta('meta[name="date"]'),
+      headings,
+      links,
+      images,
+      videoCount: document.querySelectorAll('video, iframe[src*="youtube"], iframe[src*="vimeo"]').length,
+      codeCount: document.querySelectorAll('pre, code').length,
+      text,
+      wordCount: text.split(/\s+/).filter(Boolean).length
+    };
+  }
+
   function setBusy(label) {
     root.querySelector('[data-status]').textContent = 'Scanning...';
     root.querySelector('[data-summary]').textContent = label;
@@ -159,7 +205,7 @@
     root.querySelector('[data-status]').textContent = result.status;
     root.querySelector('[data-summary]').textContent = result.summary;
     root.querySelector('[data-evidence]').innerHTML = result.evidence.map((item) => `
-      <div><b>${escapeHtml(item.label)}</b><br><span>${escapeHtml(item.detail || '')}</span></div>
+      <div><small>${escapeHtml(item.category || 'Evidence')}</small><br><b>${escapeHtml(item.label)}</b><br><span>${escapeHtml(item.detail || '')}</span></div>
     `).join('');
   }
 
@@ -220,7 +266,7 @@
 
   root.querySelector('[data-close]').addEventListener('click', () => root.remove());
   root.querySelector('[data-scan-page]').addEventListener('click', () => {
-    scan({ type: 'text', content: pageSnippet() }, 'Reading visible page text...');
+    scan({ type: 'url', url: location.href, content: location.href, pageSnapshot: pageSnapshot() }, 'Reading page structure...');
   });
   root.querySelector('[data-scan-selection]').addEventListener('click', () => {
     scan({ type: 'text', content: window.getSelection().toString().trim() || pageSnippet() }, 'Reading selected text...');

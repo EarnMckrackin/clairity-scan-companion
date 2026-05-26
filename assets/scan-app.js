@@ -65,6 +65,50 @@ function setPreview(type) {
   els.textLines.classList.toggle('notice-hidden', type !== 'text');
 }
 
+function metricLabel(key) {
+  return {
+    sourceConfidence: 'Source confidence',
+    contentRisk: 'Content risk',
+    mediaRisk: 'Media risk',
+    contextCompleteness: 'Context completeness',
+    scanConfidence: 'Scan confidence'
+  }[key] || key;
+}
+
+function renderReport(result) {
+  const sections = result.metadata?.reportSections || [];
+  const metrics = result.metadata?.metrics || null;
+  const sectionMarkup = sections.map((section) => `
+    <div class="report-section">
+      <strong>${escapeHtml(section.title)}</strong>
+      <p>${escapeHtml(section.detail)}</p>
+    </div>
+  `).join('');
+  const metricMarkup = metrics ? `
+    <div class="metric-grid">
+      ${Object.entries(metrics).map(([key, value]) => `
+        <div class="metric">
+          <span>${escapeHtml(metricLabel(key))}</span>
+          <b>${escapeHtml(value)}</b>
+        </div>
+      `).join('')}
+    </div>
+  ` : '';
+  const evidenceMarkup = result.evidence.map((item, index) => `
+    <div class="timeline-step ${item.sentiment === 'supportive' ? 'supportive-step' : ''}">
+      <span class="signal-dot">${index + 1}</span>
+      <span>
+        <em>${escapeHtml(item.category || 'Evidence')}</em>
+        ${escapeHtml(item.label)}
+        <small>${escapeHtml(item.detail || '')}</small>
+      </span>
+      <span class="mini-score">${escapeHtml(item.weight)}</span>
+    </div>
+  `).join('');
+
+  els.detailSignals.innerHTML = `${metricMarkup}${sectionMarkup}${evidenceMarkup}`;
+}
+
 function renderResult(result, { autosaved = false } = {}) {
   state.currentResult = result;
   els.score.textContent = result.score;
@@ -75,14 +119,7 @@ function renderResult(result, { autosaved = false } = {}) {
   els.detailTitle.textContent = result.label || `${readableType(result.type)} scan`;
   els.detailCopy.textContent = result.nextStep;
   setPreview(result.type);
-
-  els.detailSignals.innerHTML = result.evidence.map((item, index) => `
-    <div class="timeline-step">
-      <span class="signal-dot">${index + 1}</span>
-      <span>${escapeHtml(item.label)}<small>${escapeHtml(item.detail || '')}</small></span>
-      <span class="mini-score">${escapeHtml(item.weight)}</span>
-    </div>
-  `).join('');
+  renderReport(result);
 
   els.message.textContent = autosaved
     ? 'Scan complete · saved on this device'

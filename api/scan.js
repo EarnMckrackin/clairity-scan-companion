@@ -46,8 +46,145 @@ function evidence(label, weight, detail) {
   return { label, weight, detail };
 }
 
+function pageEvidence(category, label, weight, detail, sentiment = 'caution') {
+  return { category, label, weight, detail, sentiment };
+}
+
 function lower(value) {
   return String(value || '').toLowerCase();
+}
+
+function unique(items) {
+  return [...new Set(items.filter(Boolean).map((item) => String(item).trim()).filter(Boolean))];
+}
+
+function decodeHtml(value) {
+  return String(value || '')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;|&apos;/gi, "'")
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>');
+}
+
+function stripHtml(value) {
+  return decodeHtml(String(value || '')
+    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<noscript[\s\S]*?<\/noscript>/gi, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim());
+}
+
+function attr(html, name) {
+  const match = html.match(new RegExp(`${name}=["']([^"']+)`, 'i'));
+  return decodeHtml(match?.[1] || '');
+}
+
+function metaContent(html, key, value) {
+  const regexes = [
+    new RegExp(`<meta[^>]+${key}=["']${value}["'][^>]+content=["']([^"']+)`, 'i'),
+    new RegExp(`<meta[^>]+content=["']([^"']+)["'][^>]+${key}=["']${value}["']`, 'i')
+  ];
+  for (const regex of regexes) {
+    const match = html.match(regex);
+    if (match?.[1]) return decodeHtml(match[1].trim());
+  }
+  return '';
+}
+
+function classifyHost(host) {
+  const normalized = lower(host).replace(/^www\./, '');
+  if (/w3schools\.com|developer\.mozilla\.org|docs\./.test(normalized)) return 'educational reference';
+  if (/wikipedia\.org|britannica\.com|khanacademy\.org/.test(normalized)) return 'reference';
+  if (/reddit\.com|x\.com|twitter\.com|tiktok\.com|instagram\.com|facebook\.com|threads\.net|youtube\.com/.test(normalized)) return 'social platform';
+  if (/\.gov$|\.edu$/.test(normalized)) return 'institutional';
+  if (/nytimes\.com|apnews\.com|reuters\.com|bbc\.com|npr\.org|theguardian\.com|washingtonpost\.com/.test(normalized)) return 'news';
+  return 'general website';
+}
+
+function articleFor(value) {
+  return /^[aeiou]/i.test(String(value || '')) ? 'an' : 'a';
+}
+
+function extractPageSnapshotFromHtml(html, url, metadata = {}) {
+  const title = stripHtml(html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] || '')
+    || metadata.title
+    || '';
+  const description = metaContent(html, 'name', 'description')
+    || metaContent(html, 'property', 'og:description')
+    || metadata.description
+    || '';
+  const canonical = attr(html.match(/<link[^>]+rel=["']canonical["'][^>]*>/i)?.[0] || '', 'href')
+    || metaContent(html, 'property', 'og:url')
+    || url;
+  const author = metaContent(html, 'name', 'author') || metaContent(html, 'property', 'article:author') || '';
+  const publishedTime = metaContent(html, 'property', 'article:published_time')
+    || metaContent(html, 'name', 'date')
+    || metaContent(html, 'itemprop', 'datePublished')
+    || '';
+  const headings = unique([...html.matchAll(/<h([1-3])[^>]*>([\s\S]*?)<\/h\1>/gi)]
+    .map((match) => stripHtml(match[2])).filter((item) => item.length > 1)).slice(0, 14);
+  const links = [...html.matchAll(/<a\b[^>]*href=["']([^"']+)/gi)].map((match) => decodeHtml(match[1])).slice(0, 160);
+  const images = [...html.matchAll(/<img\b[^>]*>/gi)].map((match) => ({
+    src: attr(match[0], 'src'),
+    alt: attr(match[0], 'alt')
+  })).filter((item) => item.src || item.alt).slice(0, 80);
+  const videoCount = (html.match(/<video\b|og:video|twitter:player/gi) || []).length;
+  const codeCount = (html.match(/<pre\b|<code\b/gi) || []).length;
+  const articleHtml = html.match(/<article\b[^>]*>([\s\S]*?)<\/article>/i)?.[1] || '';
+  const mainHtml = html.match(/<main\b[^>]*>([\s\S]*?)<\/main>/i)?.[1] || '';
+  const text = stripHtml(articleHtml || mainHtml || html).slice(0, 24000);
+
+  return {
+    url,
+    title,
+    description,
+    canonical,
+    author,
+    publishedTime,
+    headings,
+    links,
+    images,
+    videoCount,
+    codeCount,
+    text,
+    wordCount: text.split(/\s+/).filter(Boolean).length,
+    source: metadata.source || 'server-fetch',
+    httpStatus: metadata.httpStatus,
+    contentType: metadata.contentType,
+    finalUrl: metadata.finalUrl || url
+  };
+}
+
+function normalizePageSnapshot(snapshot, fallbackUrl) {
+  const safe = snapshot || {};
+  return {
+    url: safe.url || fallbackUrl || '',
+    title: String(safe.title || '').slice(0, 180),
+    description: String(safe.description || '').slice(0, 420),
+    canonical: safe.canonical || safe.url || fallbackUrl || '',
+    author: String(safe.author || '').slice(0, 120),
+    publishedTime: String(safe.publishedTime || '').slice(0, 80),
+    headings: unique(safe.headings || []).slice(0, 14),
+    links: unique((safe.links || []).map((item) => typeof item === 'string' ? item : item.href)).slice(0, 160),
+    images: (safe.images || []).map((item) => ({
+      src: String(item.src || '').slice(0, 400),
+      alt: String(item.alt || '').slice(0, 180),
+      width: item.width || null,
+      height: item.height || null
+    })).slice(0, 80),
+    videoCount: Number(safe.videoCount || 0),
+    codeCount: Number(safe.codeCount || 0),
+    text: String(safe.text || '').replace(/\s+/g, ' ').trim().slice(0, 24000),
+    wordCount: Number(safe.wordCount || String(safe.text || '').split(/\s+/).filter(Boolean).length),
+    source: safe.source || 'browser-snapshot',
+    httpStatus: safe.httpStatus,
+    contentType: safe.contentType,
+    finalUrl: safe.finalUrl || safe.url || fallbackUrl || ''
+  };
 }
 
 function detectUrgency(text) {
@@ -62,15 +199,19 @@ function summarizeSignals(signals) {
   if (!signals.length) {
     return 'We did not find strong warning signs in this quick scan. Still check the source before sharing.';
   }
+  const supportive = signals.filter((item) => item.sentiment === 'supportive').slice(0, 2);
+  const cautions = signals.filter((item) => item.sentiment !== 'supportive').slice(0, 2);
+  if (supportive.length && !cautions.length) {
+    return `This looks low-risk in the quick scan: ${supportive.map((item) => item.label.toLowerCase()).join(' and ')}.`;
+  }
   const top = signals.slice(0, 2).map((item) => item.label.toLowerCase()).join(' and ');
   return `We noticed ${top}. That does not prove AI involvement, but it is worth checking before sharing.`;
 }
 
-async function fetchUrlSignals(url) {
-  const signals = [];
+async function fetchPageSnapshot(url) {
   const metadata = {};
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 4500);
+  const timeout = setTimeout(() => controller.abort(), 6500);
 
   try {
     const response = await fetch(url, {
@@ -85,52 +226,184 @@ async function fetchUrlSignals(url) {
     metadata.contentType = response.headers.get('content-type') || 'unknown';
 
     if (!response.ok) {
-      signals.push(evidence('Page could not be read clearly', 'Medium', `The page returned HTTP ${response.status}.`));
-      return { signals, metadata, text: '' };
+      return { snapshot: null, metadata, error: `The page returned HTTP ${response.status}.` };
     }
 
     const contentType = metadata.contentType;
     if (!contentType.includes('text/html') && !contentType.includes('text/plain')) {
-      signals.push(evidence('Link is not a normal readable page', 'Medium', `The response type was ${contentType}.`));
-      return { signals, metadata, text: '' };
+      return { snapshot: null, metadata, error: `The response type was ${contentType}.` };
     }
 
     const html = (await response.text()).slice(0, MAX_URL_HTML_LENGTH);
-    const title = html.match(/<title[^>]*>([^<]+)<\/title>/i)?.[1]?.trim();
-    const description = html.match(/<meta[^>]+name=["']description["'][^>]+content=["']([^"']+)/i)?.[1]?.trim()
-      || html.match(/<meta[^>]+property=["']og:description["'][^>]+content=["']([^"']+)/i)?.[1]?.trim();
-    const imageCount = (html.match(/<img\b/gi) || []).length;
-    const videoCount = (html.match(/<video\b|og:video|twitter:player/gi) || []).length;
-    const published = /article:published_time|datePublished|published|datetime=/i.test(html);
-    const author = /author|article:author|byline/i.test(html);
-    const aiTerms = /ai-generated|synthetic media|deepfake|made with ai|generated by ai|watermark/i.test(html);
-    const repostTerms = /repost|viral|shared from|originally posted|via @|credit:/i.test(html);
-
-    metadata.title = title || '';
-    metadata.description = description || '';
-    metadata.imageCount = imageCount;
-    metadata.videoCount = videoCount;
-
-    if (!published) signals.push(evidence('No clear publication date found', 'Medium', 'The page did not expose an obvious date signal.'));
-    if (!author) signals.push(evidence('No clear author or source found', 'Medium', 'The page did not expose an obvious author/source signal.'));
-    if (aiTerms) signals.push(evidence('AI or synthetic-media language appears on the page', 'High', 'The page text mentions AI generation or synthetic media.'));
-    if (repostTerms) signals.push(evidence('Repost or credit language appears', 'Medium', 'The page may be showing a copy rather than the original source.'));
-    if (imageCount > 8) signals.push(evidence('Many images appear on the page', 'Low', 'A media-heavy page can make source context harder to verify.'));
-
-    return { signals, metadata, text: [title, description].filter(Boolean).join(' ') };
+    const snapshot = extractPageSnapshotFromHtml(html, response.url, metadata);
+    metadata.title = snapshot.title;
+    metadata.description = snapshot.description;
+    metadata.imageCount = snapshot.images.length;
+    metadata.videoCount = snapshot.videoCount;
+    return { snapshot, metadata, error: '' };
   } catch (error) {
-    signals.push(evidence('Page scan could not finish', 'Medium', 'The page may block automated reading or took too long to respond.'));
     metadata.error = error.name === 'AbortError' ? 'Timed out while reading page' : error.message;
-    return { signals, metadata, text: '' };
+    return { snapshot: null, metadata, error: 'The page may block automated reading or took too long to respond.' };
   } finally {
     clearTimeout(timeout);
   }
 }
 
+function scorePageProfile(snapshot, parsed, fetchError = '') {
+  const host = lower(parsed.hostname);
+  const hostType = classifyHost(host);
+  const text = [snapshot?.title, snapshot?.description, snapshot?.headings?.join(' '), snapshot?.text].filter(Boolean).join(' ');
+  const textLower = lower(text);
+  const signals = [];
+  const reportSections = [];
+  const metrics = {
+    sourceConfidence: 45,
+    contentRisk: 28,
+    mediaRisk: 22,
+    contextCompleteness: 35,
+    scanConfidence: snapshot ? 70 : 28
+  };
+
+  if (parsed.protocol === 'https:') {
+    metrics.sourceConfidence += 12;
+    signals.push(pageEvidence('Source identity', 'HTTPS page', 'Support', 'The page uses HTTPS, which supports basic transport integrity.', 'supportive'));
+  } else {
+    metrics.sourceConfidence -= 18;
+    metrics.contentRisk += 8;
+    signals.push(pageEvidence('Source identity', 'Not HTTPS', 'Medium', 'Non-HTTPS pages provide weaker source and integrity signals.'));
+  }
+
+  if (hostType === 'educational reference' || hostType === 'reference' || hostType === 'institutional') {
+    metrics.sourceConfidence += 24;
+    metrics.contentRisk -= 12;
+    signals.push(pageEvidence('Source identity', `${hostType[0].toUpperCase()}${hostType.slice(1)} source`, 'Support', `The domain pattern fits ${articleFor(hostType)} ${hostType} page rather than a viral post.`, 'supportive'));
+  } else if (hostType === 'social platform') {
+    metrics.contentRisk += 16;
+    metrics.contextCompleteness -= 12;
+    signals.push(pageEvidence('Source identity', 'Social platform context', 'Medium', 'Social posts are often reposted without original source context.'));
+  } else if (hostType === 'news') {
+    metrics.sourceConfidence += 10;
+    signals.push(pageEvidence('Source identity', 'News/source domain recognized', 'Support', 'The domain matches a known publisher pattern; still check author/date for the specific page.', 'supportive'));
+  }
+
+  if (fetchError) {
+    metrics.scanConfidence -= 34;
+    metrics.contextCompleteness -= 22;
+    metrics.contentRisk += hostType === 'social platform' ? 14 : 7;
+    signals.push(pageEvidence('Scan coverage', 'Page could not be read clearly', 'Medium', fetchError));
+  }
+
+  if (snapshot) {
+    if (snapshot.title) {
+      metrics.contextCompleteness += 8;
+      signals.push(pageEvidence('Page purpose', 'Readable page title', 'Support', `Title found: “${snapshot.title.slice(0, 90)}”.`, 'supportive'));
+    }
+    if (snapshot.description) {
+      metrics.contextCompleteness += 8;
+      signals.push(pageEvidence('Page purpose', 'Readable page description', 'Support', snapshot.description.slice(0, 150), 'supportive'));
+    }
+    if (snapshot.headings.length >= 3) {
+      metrics.contextCompleteness += 10;
+      metrics.contentRisk -= 6;
+      signals.push(pageEvidence('Page structure', 'Structured headings found', 'Support', `Found ${snapshot.headings.length} headings, which helps identify page purpose.`, 'supportive'));
+    }
+    if (snapshot.codeCount >= 2 || /tutorial|reference|example|learn|syntax|html|css|javascript/i.test(text)) {
+      metrics.contentRisk -= 12;
+      signals.push(pageEvidence('Page purpose', 'Educational/reference structure', 'Support', 'The page looks like instruction or reference content rather than a viral media claim.', 'supportive'));
+    }
+    if (snapshot.author || snapshot.publishedTime) {
+      metrics.contextCompleteness += 10;
+      signals.push(pageEvidence('Context completeness', 'Author/date signal found', 'Support', [snapshot.author && `Author: ${snapshot.author}`, snapshot.publishedTime && `Date: ${snapshot.publishedTime}`].filter(Boolean).join(' · '), 'supportive'));
+    } else if (!['educational reference', 'reference'].includes(hostType)) {
+      metrics.contextCompleteness -= 10;
+      signals.push(pageEvidence('Context completeness', 'No clear author or date found', 'Medium', 'For news or social claims, missing author/date context makes verification harder.'));
+    }
+    if (snapshot.images.length) {
+      metrics.mediaRisk += Math.min(14, Math.ceil(snapshot.images.length / 8) * 4);
+      const altCount = snapshot.images.filter((image) => image.alt).length;
+      signals.push(pageEvidence('Media found', `${snapshot.images.length} image${snapshot.images.length === 1 ? '' : 's'} found`, 'Low', `${altCount} include alt/caption text. Media-heavy pages may need image-specific checking.`, snapshot.images.length > 12 ? 'caution' : 'supportive'));
+    } else {
+      metrics.mediaRisk -= 8;
+      signals.push(pageEvidence('Media found', 'No prominent images detected', 'Support', 'This scan is mostly about page/source context, not image manipulation.', 'supportive'));
+    }
+    if (snapshot.videoCount) {
+      metrics.mediaRisk += 12;
+      signals.push(pageEvidence('Media found', 'Video or embedded player found', 'Medium', 'Video content may need frame/audio analysis beyond this page scan.'));
+    }
+  }
+
+  if (detectUrgency(text)) {
+    metrics.contentRisk += 20;
+    signals.push(pageEvidence('Content language', 'Urgent sharing language', 'High', 'The wording pushes people to share quickly before checking the source.'));
+  } else if (snapshot && snapshot.wordCount > 40) {
+    metrics.contentRisk -= 8;
+    signals.push(pageEvidence('Content language', 'No urgent sharing language found', 'Support', 'The visible text does not pressure readers to share immediately.', 'supportive'));
+  }
+
+  if (/ai-generated|synthetic media|deepfake|made with ai|generated by ai|watermark|chatgpt/i.test(textLower)) {
+    metrics.contentRisk += 16;
+    signals.push(pageEvidence('AI/media clues', 'AI or synthetic-media wording appears', 'High', 'The page text mentions AI generation, deepfakes, synthetic media, or generated content.'));
+  }
+  if (/repost|viral|shared from|originally posted|via @|credit:/i.test(textLower)) {
+    metrics.contextCompleteness -= 7;
+    metrics.contentRisk += 8;
+    signals.push(pageEvidence('Context completeness', 'Repost or credit language appears', 'Medium', 'The page may be showing a copy rather than the original source.'));
+  }
+
+  Object.keys(metrics).forEach((key) => {
+    metrics[key] = Math.max(0, Math.min(100, Math.round(metrics[key])));
+  });
+
+  const riskScore = clampScore(
+    52
+    - metrics.sourceConfidence * 0.22
+    + metrics.contentRisk * 0.38
+    + metrics.mediaRisk * 0.18
+    - metrics.contextCompleteness * 0.16
+    - metrics.scanConfidence * 0.10
+  );
+
+  reportSections.push({
+    title: 'Source identity',
+    detail: `${parsed.hostname} looks like ${articleFor(hostType)} ${hostType}. ${parsed.protocol === 'https:' ? 'HTTPS is present.' : 'HTTPS is not present.'}`
+  });
+  reportSections.push({
+    title: 'Page purpose',
+    detail: snapshot
+      ? [snapshot.title && `Title: ${snapshot.title}`, snapshot.description && `Description: ${snapshot.description}`, snapshot.headings.length && `Headings sampled: ${snapshot.headings.slice(0, 4).join(' · ')}`].filter(Boolean).join(' ')
+      : 'clAIrity could not extract visible page content from the server-side scan.'
+  });
+  reportSections.push({
+    title: 'Media and claims',
+    detail: snapshot
+      ? `${snapshot.images.length} image(s), ${snapshot.videoCount} video/player signal(s), ${snapshot.wordCount} visible words sampled.`
+      : 'Use the floating companion to scan visible text directly from the page if the server cannot read it.'
+  });
+
+  return { signals, reportSections, metrics, riskScore, hostType };
+}
+
+function summarizePageResult(status, profile, snapshot, parsed) {
+  const hostType = profile.hostType;
+  if (!snapshot) {
+    if (status.tone === 'ok') {
+      return `${parsed.hostname} looks like ${articleFor(hostType)} ${hostType}, but clAIrity could not read the page content directly. Use the floating companion for a stronger scan of visible text and media.`;
+    }
+    return `clAIrity could not read the page content directly from ${parsed.hostname}. The URL/context still suggests a cautious check, but use the floating companion for a stronger page scan.`;
+  }
+  if (status.tone === 'ok') {
+    if (hostType === 'educational reference' || hostType === 'reference') {
+      return 'This looks like a stable educational/reference page. We found HTTPS, readable structure, and no urgent sharing language. This scan does not verify every code example.';
+    }
+    return 'This page has several trust-supporting signals and no strong warning signs in the quick scan. Still check details before relying on it.';
+  }
+  const caution = profile.signals.find((item) => item.sentiment !== 'supportive');
+  const support = profile.signals.find((item) => item.sentiment === 'supportive');
+  return [caution && `Main caution: ${caution.label.toLowerCase()}.`, support && `Helpful context: ${support.label.toLowerCase()}.`, 'This does not prove AI involvement; it tells you what to check next.'].filter(Boolean).join(' ');
+}
+
 async function analyzeUrl(payload) {
   const input = String(payload.content || payload.url || '').trim();
-  let score = 38;
-  const signals = [];
   const limitations = ['Webpage scans can miss content that appears only after login, paywalls, or heavy scripts.'];
 
   let parsed;
@@ -147,32 +420,40 @@ async function analyzeUrl(payload) {
     });
   }
 
-  const host = lower(parsed.hostname);
-  if (/example|localhost|test/.test(host)) signals.push(evidence('Sample or local domain', 'Low', 'This looks like a prototype/test link, so source checks are limited.'));
-  if (/x\.com|twitter|tiktok|instagram|facebook|threads|reddit|youtube|social/.test(host)) {
-    score += 12;
-    signals.push(evidence('Social platform context', 'Medium', 'Social posts are often reposted without the original source attached.'));
-  }
-  if (parsed.protocol !== 'https:') {
-    score += 9;
-    signals.push(evidence('Link is not HTTPS', 'Medium', 'Non-HTTPS pages provide weaker source and integrity signals.'));
-  }
-
-  const fetched = await fetchUrlSignals(parsed.href);
-  signals.push(...fetched.signals);
-  score += fetched.signals.reduce((total, item) => total + weightValue(item.weight), 0);
-
-  const textSignals = analyzeTextSignals(fetched.text || parsed.href);
-  signals.push(...textSignals.signals.slice(0, 2));
-  score += textSignals.scoreDelta;
+  const browserSnapshot = payload.pageSnapshot ? normalizePageSnapshot(payload.pageSnapshot, parsed.href) : null;
+  const fetched = browserSnapshot
+    ? { snapshot: browserSnapshot, metadata: { source: 'browser-snapshot' }, error: '' }
+    : await fetchPageSnapshot(parsed.href);
+  const snapshot = fetched.snapshot;
+  const profile = scorePageProfile(snapshot, parsed, fetched.error);
+  const status = statusFromScore(profile.riskScore);
 
   return buildResult({
     type: 'url',
-    label: fetched.metadata.title || parsed.hostname,
-    score,
-    signals,
-    nextStep: 'Look for the original source, author, and date before sharing this link.',
-    metadata: fetched.metadata,
+    label: snapshot?.title || fetched.metadata.title || parsed.hostname,
+    score: profile.riskScore,
+    signals: profile.signals,
+    summary: summarizePageResult(status, profile, snapshot, parsed),
+    nextStep: status.tone === 'ok'
+      ? 'Use normal care: cite the page directly and verify any important claims with a second source.'
+      : 'Check the original source, author/date, and any media captions before sharing or relying on this page.',
+    metadata: {
+      ...fetched.metadata,
+      page: snapshot ? {
+        title: snapshot.title,
+        description: snapshot.description,
+        canonical: snapshot.canonical,
+        author: snapshot.author,
+        publishedTime: snapshot.publishedTime,
+        headings: snapshot.headings,
+        imageCount: snapshot.images.length,
+        videoCount: snapshot.videoCount,
+        wordCount: snapshot.wordCount,
+        source: snapshot.source
+      } : null,
+      metrics: profile.metrics,
+      reportSections: profile.reportSections
+    },
     limitations
   });
 }
@@ -337,7 +618,7 @@ function analyzeMedia(payload) {
   });
 }
 
-function buildResult({ type, label, score, signals, nextStep, metadata = {}, limitations = [] }) {
+function buildResult({ type, label, score, signals, summary, nextStep, metadata = {}, limitations = [] }) {
   const normalizedSignals = signals.length
     ? signals
     : [evidence('No strong warning signs found', 'Low', 'The quick scan did not find strong concern signals.')];
@@ -352,7 +633,7 @@ function buildResult({ type, label, score, signals, nextStep, metadata = {}, lim
     score: finalScore,
     status: status.label,
     tone: status.tone,
-    summary: summarizeSignals(normalizedSignals),
+    summary: summary || summarizeSignals(normalizedSignals),
     evidence: normalizedSignals.slice(0, 6),
     nextStep,
     metadata,

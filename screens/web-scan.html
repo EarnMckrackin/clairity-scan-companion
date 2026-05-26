@@ -36,8 +36,8 @@
               <p class="pill">Scan a webpage, post, file, or text</p>
               <h1 id="scan-title">One friendly check before you trust what you see.</h1>
               <p>
-                clAIrity checks source clues, edit patterns, audio mismatch, watermarks,
-                and context signals. The result stays plain: what we noticed, why it matters,
+                clAIrity checks source clues, page structure, media context, audio mismatch,
+                and AI/editing signals. The result stays plain: what we noticed, why it matters,
                 and what to do next.
               </p>
 
@@ -49,14 +49,14 @@
                 </div>
 
                 <form class="url-scan" id="scanForm" data-panel="url">
-                  <input id="scanInput" type="url" value="https://www.reddit.com/r/isthisAI/s/qUk7Y4r7Ao" aria-label="Webpage or social post URL" />
+                  <input id="scanInput" type="url" value="https://www.w3schools.com/html/default.asp" aria-label="Webpage or social post URL" />
                   <button class="primary-btn" type="submit" data-scan-submit data-idle-label="Scan now">Scan now</button>
                 </form>
 
                 <form class="drop-zone notice-hidden" id="fileForm" data-panel="upload">
                   <div>
                     <strong>Drop a photo, video, or audio clip</strong>
-                    <span>clAIrity reads file metadata in your browser. Raw files are not saved.</span>
+                    <span>clAIrity reads image statistics and file metadata in your browser. Raw files are not saved.</span>
                   </div>
                   <label class="secondary-btn" for="fileInput">Choose file</label>
                   <input class="file-input" id="fileInput" type="file" accept="image/*,video/*,audio/*" />
@@ -69,15 +69,15 @@
                   <button class="primary-btn stack-gap" type="submit" data-scan-submit data-idle-label="Scan text">Scan text</button>
                 </form>
 
-                <p id="scanMessage" class="pill">Ready to scan · family mode on</p>
+                <p id="scanMessage" class="pill">Ready to scan · history stays on this device</p>
               </div>
             </div>
 
             <aside class="score-panel result-stack" aria-label="Safety score">
-              <div class="score-orb"><strong id="scoreValue">74</strong></div>
+              <div class="score-orb"><strong id="scoreValue">--</strong></div>
               <div class="score-status">
-                <h2 id="statusTitle">Use care</h2>
-                <span class="status-badge" id="statusBadge">3 clues</span>
+                <h2 id="statusTitle">Ready</h2>
+                <span class="status-badge" id="statusBadge">0 clues</span>
               </div>
               <p id="plainSummary">
                 Run a scan to see a real score and plain-language explanation.
@@ -90,8 +90,8 @@
           <section class="module" aria-labelledby="media-state-title">
             <div class="score-status">
               <div>
-                <p class="pill">Result detail states</p>
-                <h2 id="media-state-title">Scan details</h2>
+                <p class="pill">Scan details</p>
+                <h2 id="media-state-title">Evidence and next step</h2>
               </div>
               <div class="media-tabs" role="tablist" aria-label="Result media type">
                 <button class="segment-button active" type="button" data-type="image">Image</button>
@@ -107,32 +107,25 @@
               </div>
 
               <div class="evidence-card">
-                <h3 id="detailTitle">Shared news image</h3>
+                <h3 id="detailTitle">No scan yet</h3>
                 <p id="detailCopy">Results appear here after a scan completes.</p>
-                <div class="timeline" id="detailSignals">
-                  <div class="timeline-step"><span class="signal-dot">1</span><span>Original source not attached</span><span class="mini-score">High</span></div>
-                  <div class="timeline-step"><span class="signal-dot">2</span><span>Background texture looks unusually smooth</span><span class="mini-score">Med</span></div>
-                  <div class="timeline-step"><span class="signal-dot">3</span><span>Caption changes across reposts</span><span class="mini-score">Med</span></div>
-                </div>
+                <div class="timeline" id="detailSignals"></div>
                 <button class="secondary-btn" id="trustedSearch" type="button">Open trusted search</button>
               </div>
             </div>
           </section>
 
-          <section class="evidence-grid" aria-label="Evidence modules">
+          <section class="evidence-grid" aria-label="App actions">
             <article class="module">
-              <h2>What we noticed</h2>
-              <div class="signal-list">
-                <div class="signal"><span class="signal-dot">1</span><p>No original source is linked near the post.</p></div>
-                <div class="signal"><span class="signal-dot">2</span><p>The background texture is unusually smooth around the subject.</p></div>
-                <div class="signal"><span class="signal-dot">3</span><p>Other copies of this image show a different caption.</p></div>
-              </div>
+              <h2>Local history</h2>
+              <p>Scan summaries are saved in this browser when history is enabled. Raw uploaded media is not saved.</p>
+              <a class="secondary-btn full-width" href="scan-history.html">Open history</a>
             </article>
 
             <article class="module">
-              <h2>What to do next</h2>
-              <p>Before sharing, look for the original post, check a trusted news source, or ask an adult/helper to review the page.</p>
-              <button class="secondary-btn" type="button">Open trusted search</button>
+              <h2>Privacy controls</h2>
+              <p>Choose whether summaries are saved, clear local history, and set the API base for companion mode.</p>
+              <a class="secondary-btn full-width" href="settings-privacy.html">Open privacy</a>
             </article>
 
             <article class="module">

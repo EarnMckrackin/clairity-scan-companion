@@ -661,6 +661,64 @@ button {
   line-height: 1.35;
 }
 
+.timeline-step em {
+  display: block;
+  margin-bottom: 3px;
+  color: oklch(38% 0.1 230);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.supportive-step .signal-dot,
+.supportive-step .mini-score {
+  background: color-mix(in oklch, var(--ok) 16%, white);
+  color: oklch(34% 0.12 150);
+}
+
+.report-section {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 12px;
+  background: color-mix(in oklch, var(--trust) 7%, white);
+}
+
+.report-section strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.report-section p {
+  margin: 0;
+}
+
+.metric-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.metric {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: white;
+  padding: 10px;
+}
+
+.metric span {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.25;
+}
+
+.metric b {
+  display: block;
+  margin-top: 4px;
+  font-size: 22px;
+}
+
 .result-stack {
   display: grid;
   gap: 14px;
