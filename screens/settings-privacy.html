@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>clAIrity Settings and Privacy</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="../assets/clarity.css" />
+  </head>
+  <body>
+    <main class="app-frame">
+      <header class="brand-row">
+        <div class="brand-lockup" aria-label="clAIrity">
+          <img class="brand-logo" src="../assets/clairity-logo.svg" alt="" />
+          <span class="wordmark">cl<span class="word-ai">AI</span>rity</span>
+        </div>
+        <nav class="screen-links" aria-label="clAIrity screens">
+          <a class="screen-link" href="web-scan.html">Scan</a>
+          <a class="screen-link" href="scan-history.html">History</a>
+          <a class="screen-link active" href="settings-privacy.html">Privacy</a>
+          <a class="screen-link" href="extension-popup.html">Extension</a>
+        </nav>
+      </header>
+
+      <section class="scan-stage">
+        <div class="hero-copy">
+          <p class="pill">Settings and privacy</p>
+          <h1>Helpful scans with clear controls for families.</h1>
+          <p>
+            clAIrity can keep explanations simple, reduce stored media, and show softer
+            language for younger readers. Controls are written as choices, not technical chores.
+          </p>
+        </div>
+        <aside class="score-panel">
+          <div class="score-orb"><strong>24h</strong></div>
+          <div>
+            <h2>Upload retention</h2>
+            <p>Uploaded media is removed after one day in this privacy preset.</p>
+          </div>
+        </aside>
+      </section>
+
+      <section class="settings-layout stack-gap">
+        <article class="settings-card">
+          <h2>Privacy controls</h2>
+          <div class="settings-row">
+            <div>
+              <strong>Save scan summaries</strong>
+              <p>Keep scores, explanations, and next steps in History.</p>
+            </div>
+            <button class="toggle" type="button" aria-label="Save scan summaries on"></button>
+          </div>
+          <div class="settings-row">
+            <div>
+              <strong>Save uploaded media</strong>
+              <p>Keep the original uploaded file with the result.</p>
+            </div>
+            <button class="toggle off" type="button" aria-label="Save uploaded media off"></button>
+          </div>
+          <div class="settings-row">
+            <div>
+              <strong>Family mode</strong>
+              <p>Use larger labels, gentle wording, and simpler next steps.</p>
+            </div>
+            <button class="toggle" type="button" aria-label="Family mode on"></button>
+          </div>
+          <div class="settings-row">
+            <div>
+              <strong>On-page extension warnings</strong>
+              <p>Show a small notice near media when clAIrity sees concerning clues.</p>
+            </div>
+            <button class="toggle" type="button" aria-label="On-page warnings on"></button>
+          </div>
+        </article>
+
+        <aside class="settings-card">
+          <h2>Trusted helpers</h2>
+          <p>Add people who can receive a saved review list when a scan feels confusing.</p>
+          <div class="signal-list">
+            <div class="signal"><span class="signal-dot">A</span><p>Alex · parent</p></div>
+            <div class="signal"><span class="signal-dot">M</span><p>Ms. Rivera · teacher</p></div>
+            <div class="signal"><span class="signal-dot">+</span><p>Add another helper</p></div>
+          </div>
+          <button class="secondary-btn full-width stack-gap" type="button">Review data choices</button>
+        </aside>
+      </section>
+    </main>
+
+    <script>
+      document.querySelectorAll('.toggle').forEach((toggle) => {
+        toggle.addEventListener('click', () => {
+          toggle.classList.toggle('off');
+          const state = toggle.classList.contains('off') ? 'off' : 'on';
+          toggle.setAttribute('aria-label', toggle.getAttribute('aria-label').replace(/(on|off)$/i, state));
+        });
+      });
+    </script>
+  </body>
+</html>

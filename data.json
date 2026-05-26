@@ -1,0 +1,86 @@
+{
+  "product": {
+    "name": "clAIrity",
+    "tagline": "A friendly media scan for everyday people.",
+    "audience": "General consumers, including families, kids, and older adults.",
+    "primaryFlow": "Scan a webpage or social post",
+    "resultMode": "Safety score with explanation",
+    "updatedAt": "2026-05-26 00:00 ET"
+  },
+  "summary": {
+    "headline": "Scan media before you trust it",
+    "intro": "clAIrity checks pictures, videos, audio, and text for signs that AI may have created or changed them. Results are written in plain language and show what to do next.",
+    "currentScore": "74",
+    "currentStatus": "Use care",
+    "currentExplanation": "The post has a few visual and source clues that deserve a second look, but there is not enough evidence to call it AI-made."
+  },
+  "scanSamples": [
+    {
+      "label": "Shared news image",
+      "mediaType": "Image",
+      "source": "Social post",
+      "score": "74",
+      "status": "Use care",
+      "finding": "No trusted source attached; background texture looks softened.",
+      "nextStep": "Look for the original post or a trusted news source."
+    },
+    {
+      "label": "Short video clip",
+      "mediaType": "Video",
+      "source": "Webpage",
+      "score": "42",
+      "status": "Likely okay",
+      "finding": "The clip has consistent lighting and no obvious edit boundary.",
+      "nextStep": "Check the page date and author before sharing."
+    },
+    {
+      "label": "Voice message",
+      "mediaType": "Audio",
+      "source": "Message thread",
+      "score": "88",
+      "status": "High concern",
+      "finding": "Voice rhythm and background noise change suddenly mid-sentence.",
+      "nextStep": "Confirm with the person through another channel."
+    },
+    {
+      "label": "Viral text post",
+      "mediaType": "Text",
+      "source": "Message thread",
+      "score": "69",
+      "status": "Use care",
+      "finding": "The post uses urgent sharing language and does not name a source.",
+      "nextStep": "Look for a dated source from a trusted outlet before sharing."
+    }
+  ],
+  "extensionMoments": [
+    {
+      "title": "Popup scan result",
+      "detail": "A 15-second read with a large score, the top evidence clue, and a safer sharing action."
+    },
+    {
+      "title": "Right-click page scan",
+      "detail": "Turns a selected post or webpage into a focused scan without making users upload files."
+    },
+    {
+      "title": "On-page warning overlay",
+      "detail": "A gentle warning appears near suspicious media, with a link to the full explanation."
+    },
+    {
+      "title": "History and privacy controls",
+      "detail": "Saved scan summaries and family privacy settings stay separate from the active scan flow."
+    }
+  ],
+  "screenLinks": [
+    "screens/web-scan.html",
+    "screens/scan-history.html",
+    "screens/settings-privacy.html",
+    "screens/extension-popup.html",
+    "screens/extension-page-scan.html",
+    "screens/extension-overlay.html"
+  ],
+  "provenance": {
+    "dataSource": "Local sample scan dataset",
+    "refreshMode": "Manual refresh can replace sample scan rows while preserving the template.",
+    "notes": "Sample data is synthetic and preview-oriented; no user media or private auth material is stored."
+  }
+}

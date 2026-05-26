@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>clAIrity Scan History</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="../assets/clarity.css" />
+  </head>
+  <body>
+    <main class="app-frame">
+      <header class="brand-row">
+        <div class="brand-lockup" aria-label="clAIrity">
+          <img class="brand-logo" src="../assets/clairity-logo.svg" alt="" />
+          <span class="wordmark">cl<span class="word-ai">AI</span>rity</span>
+        </div>
+        <nav class="screen-links" aria-label="clAIrity screens">
+          <a class="screen-link" href="web-scan.html">Scan</a>
+          <a class="screen-link active" href="scan-history.html">History</a>
+          <a class="screen-link" href="settings-privacy.html">Privacy</a>
+          <a class="screen-link" href="extension-popup.html">Extension</a>
+        </nav>
+      </header>
+
+      <section class="scan-stage">
+        <div class="hero-copy">
+          <p class="pill">Saved scans</p>
+          <h1>Review what you checked, without keeping the original media.</h1>
+          <p>
+            History keeps the plain-language result, score, and next step. Private uploads
+            can be removed automatically while the helpful summary stays available.
+          </p>
+        </div>
+        <aside class="score-panel">
+          <div class="score-orb"><strong>12</strong></div>
+          <div>
+            <h2>Scans this week</h2>
+            <p>Four were saved for later. Two were marked for a family review.</p>
+          </div>
+        </aside>
+      </section>
+
+      <section class="history-layout stack-gap">
+        <article class="history-card">
+          <div class="score-status">
+            <h2>Recent activity</h2>
+            <a class="screen-link" href="web-scan.html">New scan</a>
+          </div>
+
+          <div class="history-filters" aria-label="History filters">
+            <button class="segment-button active" type="button" data-filter="all">All</button>
+            <button class="segment-button" type="button" data-filter="care">Use care</button>
+            <button class="segment-button" type="button" data-filter="concern">High concern</button>
+            <button class="segment-button" type="button" data-filter="ok">Likely okay</button>
+          </div>
+
+          <div id="historyList">
+            <article class="history-item" data-kind="care">
+              <span class="media-icon">IMG</span>
+              <div>
+                <span class="history-title">Shared news image</span>
+                <span class="history-meta">Social post · Use care · Original source not attached</span>
+              </div>
+              <span class="mini-score">74</span>
+            </article>
+            <article class="history-item" data-kind="concern">
+              <span class="media-icon">AUD</span>
+              <div>
+                <span class="history-title">Voice message from group chat</span>
+                <span class="history-meta">Audio · High concern · Voice rhythm changed suddenly</span>
+              </div>
+              <span class="mini-score">88</span>
+            </article>
+            <article class="history-item" data-kind="ok">
+              <span class="media-icon">VID</span>
+              <div>
+                <span class="history-title">Short video clip</span>
+                <span class="history-meta">Webpage · Likely okay · Page date still needs a check</span>
+              </div>
+              <span class="mini-score">42</span>
+            </article>
+            <article class="history-item" data-kind="care">
+              <span class="media-icon">TXT</span>
+              <div>
+                <span class="history-title">Viral text post</span>
+                <span class="history-meta">Text · Use care · Urgent wording without a named source</span>
+              </div>
+              <span class="mini-score">69</span>
+            </article>
+          </div>
+        </article>
+
+        <aside class="history-card">
+          <h2>Family review queue</h2>
+          <p>Saved items can be grouped for a parent, teacher, or trusted helper.</p>
+          <div class="signal-list">
+            <div class="signal"><span class="signal-dot">2</span><p>Need another person to review before sharing.</p></div>
+            <div class="signal"><span class="signal-dot">4</span><p>Have a trusted-source next step saved.</p></div>
+            <div class="signal"><span class="signal-dot">0</span><p>Contain uploaded media older than the retention setting.</p></div>
+          </div>
+          <button class="quiet-btn full-width stack-gap" type="button">Share review list</button>
+        </aside>
+      </section>
+    </main>
+
+    <script>
+      const filterButtons = document.querySelectorAll('[data-filter]');
+      const historyItems = document.querySelectorAll('[data-kind]');
+
+      filterButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+          filterButtons.forEach((item) => item.classList.remove('active'));
+          button.classList.add('active');
+          historyItems.forEach((item) => {
+            item.classList.toggle('notice-hidden', button.dataset.filter !== 'all' && item.dataset.kind !== button.dataset.filter);
+          });
+        });
+      });
+    </script>
+  </body>
+</html>

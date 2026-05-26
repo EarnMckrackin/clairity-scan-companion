@@ -1,0 +1,13 @@
+{
+  "title": "clAIrity live artifact provenance",
+  "generatedAt": "2026-05-26 00:00 ET",
+  "sourceSummary": "Preview data is a compact local sample dataset representing image, video, audio, and webpage/social-post scans.",
+  "transformationNotes": [
+    "Normalized each sample into label, media type, source, safety score, status, finding, and next step.",
+    "Added separate history and settings/privacy screens while keeping app and extension surfaces split.",
+    "Expanded result detail states for image, video, audio, and text scan previews.",
+    "Kept copy short and consumer-readable for kids, families, and older adults.",
+    "Excluded user media, private auth material, provider output envelopes, and sensitive fields."
+  ],
+  "refreshNotes": "Future refreshes should update data.json only; template.html preserves the presentation and interaction structure."
+}
