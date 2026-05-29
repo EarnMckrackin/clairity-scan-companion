@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Verax Surf Guard</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <main>
+      <p class="kicker">Verax browser check</p>
+      <h1>Verax</h1>
+      <p class="summary" id="summary">Check this page for visible images and videos.</p>
+
+      <label class="switch-row">
+        <span>Checks on</span>
+        <input id="enabledToggle" type="checkbox" checked />
+      </label>
+
+      <label class="switch-row">
+        <span>Show badges</span>
+        <input id="badgeToggle" type="checkbox" checked />
+      </label>
+
+      <label class="switch-row">
+        <span>Simple words</span>
+        <input id="simpleToggle" type="checkbox" checked />
+      </label>
+
+      <button id="scanButton" type="button">Check page</button>
+      <p class="fine-print">No media is uploaded by this extension.</p>
+    </main>
+    <script src="popup.js"></script>
+  </body>
+</html>

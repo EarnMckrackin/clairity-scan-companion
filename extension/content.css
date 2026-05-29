@@ -1,0 +1,133 @@
+.clairity-badge {
+  position: absolute;
+  z-index: 2147483646;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 26px;
+  padding: 4px 7px;
+  border: 1px solid rgba(18, 29, 38, 0.16);
+  border-radius: 999px;
+  background: rgba(248, 252, 253, 0.9);
+  color: #101820;
+  box-shadow: 0 10px 24px rgba(16, 24, 32, 0.16);
+  backdrop-filter: blur(12px);
+  font: 800 11px/1.1 "Avenir Next", system-ui, sans-serif;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.clairity-badge[data-level="watch"] {
+  background: linear-gradient(135deg, rgba(118, 220, 242, 0.28), rgba(241, 169, 77, 0.24));
+}
+
+.clairity-badge[data-level="unknown"] {
+  background: rgba(248, 252, 253, 0.9);
+}
+
+/* Honest verdict tones, matching the web app's three-state result. */
+.clairity-badge[data-level="checking"] { background: rgba(248, 252, 253, 0.9); color: #49616f; }
+.clairity-badge[data-level="ok"] { background: rgba(105, 209, 143, 0.92); color: #0e3b22; border-color: rgba(14, 59, 34, 0.3); }
+.clairity-badge[data-level="care"] { background: rgba(248, 252, 253, 0.92); color: #6a4215; }
+.clairity-badge[data-level="concern"] { background: rgba(224, 107, 116, 0.95); color: #fff; border-color: rgba(124, 36, 48, 0.4); }
+
+.clairity-panel {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 2147483647;
+  width: min(380px, calc(100vw - 32px));
+  max-height: min(620px, calc(100vh - 32px));
+  overflow: auto;
+  border: 1px solid rgba(18, 29, 38, 0.14);
+  border-radius: 18px;
+  background: rgba(247, 250, 251, 0.96);
+  color: #101820;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.24);
+  backdrop-filter: blur(18px) saturate(1.2);
+  font: 14px/1.45 "Avenir Next", system-ui, sans-serif;
+}
+
+.clairity-panel header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(18, 29, 38, 0.12);
+  background: rgba(223, 234, 238, 0.9);
+}
+
+.clairity-panel h2,
+.clairity-panel h3,
+.clairity-panel p {
+  margin: 0;
+}
+
+.clairity-panel h2 {
+  font-size: 20px;
+  font-family: "Avenir Next Condensed", "DIN Condensed", sans-serif;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.clairity-panel button {
+  border: 1px solid rgba(18, 29, 38, 0.16);
+  background: linear-gradient(135deg, #101923, #2a4352);
+  color: #f5fbfd;
+  cursor: pointer;
+  font: 800 12px "Avenir Next", system-ui, sans-serif;
+  text-transform: uppercase;
+}
+
+.clairity-panel .clairity-close {
+  width: 28px;
+  height: 28px;
+}
+
+.clairity-panel section {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  border-bottom: 1px solid rgba(18, 29, 38, 0.1);
+}
+
+.clairity-panel ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.clairity-panel li {
+  margin: 4px 0;
+}
+
+.clairity-kicker {
+  color: #49616f;
+  font: 800 11px "Avenir Next", system-ui, sans-serif;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.clairity-mono {
+  font-family: "SF Mono", "Menlo", monospace;
+  overflow-wrap: anywhere;
+}
+
+.clairity-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.clairity-actions a {
+  display: grid;
+  place-items: center;
+  min-height: 34px;
+  border: 1px solid rgba(18, 29, 38, 0.16);
+  border-radius: 10px;
+  color: #101820;
+  background: rgba(255, 255, 255, 0.72);
+  text-decoration: none;
+  font: 800 11px "Avenir Next", system-ui, sans-serif;
+  text-transform: uppercase;
+}
