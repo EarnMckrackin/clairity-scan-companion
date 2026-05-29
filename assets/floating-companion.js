@@ -33,6 +33,7 @@
       <b data-score>--</b>
       <div>
         <h2 data-status>Ready</h2>
+        <small data-badge>Built-in review</small>
         <p data-summary>Check this page, selected text, or the page URL while you browse.</p>
       </div>
     </div>
@@ -115,6 +116,15 @@
       letter-spacing: -.04em;
     }
     #clairity-floating-companion h2 { margin: 0; font-size: 20px; }
+    #clairity-floating-companion small[data-badge] {
+      display: block;
+      margin-top: 4px;
+      color: #7b8c97;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
     #clairity-floating-companion p { margin: 5px 0 0; color: #64748b; }
     #clairity-floating-companion .clairity-float-actions {
       display: grid;
@@ -139,6 +149,30 @@
       border-top: 1px solid #e5edf1;
       padding-top: 8px;
       color: #334155;
+    }
+    #clairity-floating-companion .clairity-float-check {
+      border: 1px solid #dbe5ea;
+      border-radius: 10px;
+      padding: 8px;
+      background: rgba(255,255,255,.78);
+    }
+    #clairity-floating-companion .clairity-float-check strong,
+    #clairity-floating-companion .clairity-float-check small,
+    #clairity-floating-companion .clairity-float-check span {
+      display: block;
+    }
+    #clairity-floating-companion .clairity-float-check small {
+      color: #3d5160;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+    #clairity-floating-companion .clairity-float-check span {
+      margin-top: 4px;
+      color: #64748b;
+      font-size: 12px;
+      line-height: 1.35;
     }
     @media (max-width: 520px) {
       #clairity-floating-companion {
@@ -212,21 +246,39 @@
 
   function setBusy(label) {
     root.querySelector('[data-status]').textContent = 'Checking...';
+    root.querySelector('[data-badge]').textContent = 'Built-in review';
     root.querySelector('[data-summary]').textContent = label;
   }
 
+  function reviewMark(tone) {
+    if (tone === 'ok') return 'OK';
+    if (tone === 'concern') return 'WARN';
+    if (tone === 'care') return 'MIX';
+    return '--';
+  }
+
   function render(result) {
-    root.querySelector('[data-score]').textContent = result.score;
+    root.querySelector('[data-score]').textContent = reviewMark(result.tone);
     root.querySelector('[data-status]').textContent = result.status;
+    root.querySelector('[data-badge]').textContent = result.review?.label || 'Built-in review';
     root.querySelector('[data-summary]').textContent = result.summary;
-    root.querySelector('[data-evidence]').innerHTML = result.evidence.map((item) => `
+    const checks = (result.checks || []).map((item) => `
+      <div class="clairity-float-check">
+        <small>${escapeHtml(item.label)}</small>
+        <strong>${escapeHtml(item.status)}</strong>
+        <span>${escapeHtml(item.detail || '')}</span>
+      </div>
+    `).join('');
+    const evidence = result.evidence.map((item) => `
       <div><small>${escapeHtml(item.category || 'Evidence')}</small><br><b>${escapeHtml(item.label)}</b><br><span>${escapeHtml(item.detail || '')}</span></div>
     `).join('');
+    root.querySelector('[data-evidence]').innerHTML = `${checks}${evidence}`;
   }
 
   function renderError(error) {
     root.querySelector('[data-score]').textContent = '!';
     root.querySelector('[data-status]').textContent = 'Could not check';
+    root.querySelector('[data-badge]').textContent = 'Built-in review';
     root.querySelector('[data-summary]').textContent = error.message || 'Try again from the web app.';
   }
 
@@ -239,13 +291,17 @@
   }
 
   function statusFromScore(score) {
-    if (score >= 78) return { label: 'High anomaly', tone: 'concern' };
-    if (score >= 50) return { label: 'Review required', tone: 'care' };
-    return { label: 'Low anomaly', tone: 'ok' };
+    if (score >= 78) return { label: 'Stronger warning signals', tone: 'concern' };
+    if (score >= 50) return { label: 'Needs more checking', tone: 'care' };
+    return { label: 'Mostly source-backed', tone: 'ok' };
   }
 
   function evidence(category, label, weight, detail, sentiment = 'caution') {
     return { category, label, weight, detail, sentiment };
+  }
+
+  function check(label, status, detail) {
+    return { label, status, detail };
   }
 
   function summarizeSignals(signals) {
@@ -256,7 +312,7 @@
     return `Verax noticed ${top}. That does not prove AI editing, but it is worth checking before sharing.`;
   }
 
-  function buildResult({ type, label, score, signals, nextStep, metadata = {} }) {
+  function buildResult({ type, label, score, signals, checks = [], nextStep, metadata = {} }) {
     const normalizedSignals = signals.length
       ? signals
       : [evidence('Evidence', 'No strong warning signs found', 'Low', 'Verax did not find strong concern signals in this check.', 'supportive')];
@@ -271,7 +327,12 @@
       score: finalScore,
       status: status.label,
       tone: status.tone,
+      review: {
+        id: 'built-in-review',
+        label: 'Built-in review'
+      },
       summary: summarizeSignals(normalizedSignals),
+      checks,
       evidence: normalizedSignals.slice(0, 6),
       nextStep,
       metadata,
@@ -336,6 +397,23 @@
       label: 'Selected text',
       score,
       signals,
+      checks: [
+        check(
+          'Source clues',
+          detectSourceLanguage(text) ? 'Some source wording found' : 'No clear source wording',
+          detectSourceLanguage(text)
+            ? 'Attribution-like language appears in the text.'
+            : 'The sample does not clearly say where the claim came from.'
+        ),
+        check(
+          'Claim language',
+          detectUrgency(text) ? 'Urgent wording found' : 'Lower-pressure wording',
+          detectUrgency(text)
+            ? 'The selection pushes speed or resharing.'
+            : 'The selection is not strongly pressuring the reader to act fast.'
+        ),
+        check('Detector model', 'Heuristic review only', 'This browser tool uses wording clues, not a trained detector.')
+      ],
       nextStep: 'Look for the same claim on a trusted source before sharing it.',
       metadata: { sampleLength: text.length }
     });
@@ -391,6 +469,21 @@
       label: parsed.hostname,
       score,
       signals,
+      checks: [
+        check(
+          'Source context',
+          hostType === 'social platform' ? 'Social context' : 'Recognizable source context',
+          `Host type: ${hostType}. ${parsed.protocol === 'https:' ? 'HTTPS is present.' : 'HTTPS is not present.'}`
+        ),
+        check(
+          'Page context',
+          snapshot?.text ? 'Visible page text checked' : 'URL-only check',
+          snapshot?.text
+            ? `${snapshot.wordCount || 0} visible words were available in the page.`
+            : 'This result only used the page URL and host type.'
+        ),
+        check('Detector model', 'Heuristic review only', 'This browser tool uses page and source clues, not a trained detector.')
+      ],
       nextStep: hostType === 'social platform'
         ? 'Open the original account or find a trusted report before sharing this post.'
         : 'Compare this page with another trusted source before sharing it.',
@@ -449,6 +542,21 @@
       label: media.name || 'Captured image',
       score,
       signals,
+      checks: [
+        check(
+          'File context',
+          /screenshot|screen/i.test(media.name || '') ? 'Screenshot context' : 'Basic file context',
+          media.name ? `Filename: ${media.name}.` : 'No filename was available for this capture.'
+        ),
+        check(
+          'Visual review',
+          typeof visual.edgeDensity === 'number' ? 'Local texture sample checked' : 'No pixel sample available',
+          typeof visual.edgeDensity === 'number'
+            ? 'This check used browser-side texture, contrast, and saturation statistics.'
+            : 'This check could not inspect image texture directly.'
+        ),
+        check('Detector model', 'Heuristic image review only', 'This browser tool does not use a trained AI-image detector.')
+      ],
       nextStep: 'Look for the original post, file, or source before sharing this image.',
       metadata: {
         width: media.width,
@@ -506,6 +614,7 @@
   function renderOpenedInApp() {
     root.querySelector('[data-score]').textContent = '↗';
     root.querySelector('[data-status]').textContent = 'Opened in Verax';
+    root.querySelector('[data-badge]').textContent = 'Built-in review';
     root.querySelector('[data-summary]').textContent = 'This site blocked the in-page check, so Verax opened the main app instead.';
     root.querySelector('[data-evidence]').innerHTML = '';
   }

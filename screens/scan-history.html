@@ -45,7 +45,7 @@
           <p class="pill">Saved checks</p>
           <h1>Review previous checks without keeping the original media.</h1>
           <p>
-            Saved checks keep the score, explanation, and next step. Private uploads can be removed
+            Saved checks keep the review state, explanation, and next step. Private uploads can be removed
             automatically while the summary remains available.
           </p>
         </div>
@@ -67,9 +67,9 @@
 
           <div class="history-filters" aria-label="History filters">
             <button class="segment-button active" type="button" data-filter="all">All</button>
-            <button class="segment-button" type="button" data-filter="care">Review required</button>
-            <button class="segment-button" type="button" data-filter="concern">High anomaly</button>
-            <button class="segment-button" type="button" data-filter="ok">Low anomaly</button>
+            <button class="segment-button" type="button" data-filter="care">Needs checking</button>
+            <button class="segment-button" type="button" data-filter="concern">Warnings</button>
+            <button class="segment-button" type="button" data-filter="ok">Mostly source-backed</button>
           </div>
 
           <p class="empty-state" id="emptyHistory">No checks saved yet. Run a check to build a history in this browser.</p>

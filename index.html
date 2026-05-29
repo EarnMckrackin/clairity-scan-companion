@@ -114,10 +114,13 @@
             </div>
 
             <aside class="score-panel result-stack" aria-label="What Verax found">
-              <div class="score-orb"><strong id="scoreValue">--</strong></div>
+              <div class="score-orb">
+                <strong id="scoreValue">--</strong>
+                <small id="scoreCaption">layered review</small>
+              </div>
               <div class="score-status">
                 <h2 id="statusTitle">Ready to check</h2>
-                <span class="status-badge" id="statusBadge">0 signals</span>
+                <span class="status-badge" id="statusBadge">Built-in review</span>
               </div>
               <p id="plainSummary">Paste something above and Verax will explain what it found.</p>
               <button class="quiet-btn" id="copySummary" type="button" data-ready-label="Copy result" disabled aria-describedby="resultActionsHelp">Copy result</button>
@@ -157,7 +160,7 @@
           <section class="evidence-grid" aria-label="Protocol modules">
             <article class="module">
               <h2>Saved checks</h2>
-              <p>Local records preserve the score, the explanation, and the next step without keeping the original media.</p>
+              <p>Local records preserve the review state, the explanation, and the next step without keeping the original media.</p>
               <a class="secondary-btn full-width" href="screens/scan-history.html">Open saved checks</a>
             </article>
 

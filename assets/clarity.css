@@ -358,6 +358,8 @@ textarea:focus-visible {
   justify-self: center;
   aspect-ratio: 1;
   place-items: center;
+  align-content: center;
+  gap: 8px;
   border-radius: 50%;
   background:
     radial-gradient(circle, white 0 59%, transparent 60%),
@@ -367,7 +369,16 @@ textarea:focus-visible {
 .score-orb strong {
   font-family: var(--font-display);
   font-size: clamp(58px, 8vw, 96px);
-  letter-spacing: -0.07em;
+  letter-spacing: 0;
+}
+
+.score-orb small {
+  max-width: 74%;
+  text-align: center;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 780;
+  line-height: 1.2;
 }
 
 .evidence-grid {
@@ -427,6 +438,17 @@ textarea:focus-visible {
   background: color-mix(in oklch, var(--warn) 20%, white);
   color: oklch(38% 0.11 82);
   font-weight: 820;
+  white-space: nowrap;
+}
+
+.mini-score.ok {
+  background: color-mix(in oklch, var(--ok) 16%, white);
+  color: oklch(34% 0.12 150);
+}
+
+.mini-score.concern {
+  background: color-mix(in oklch, var(--danger) 13%, white);
+  color: oklch(42% 0.14 28);
 }
 
 .extension-shell {
@@ -753,6 +775,52 @@ textarea:focus-visible {
   margin: 0;
 }
 
+.check-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.check-card {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: white;
+  padding: 12px;
+  display: grid;
+  gap: 6px;
+}
+
+.check-card.ok {
+  background: color-mix(in oklch, var(--ok) 8%, white);
+}
+
+.check-card.care {
+  background: color-mix(in oklch, var(--warn) 10%, white);
+}
+
+.check-card.concern {
+  background: color-mix(in oklch, var(--danger) 7%, white);
+}
+
+.check-card strong {
+  font-size: 16px;
+  line-height: 1.2;
+}
+
+.check-card p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.check-label {
+  color: oklch(38% 0.1 230);
+  font-size: 12px;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
 .metric-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -803,6 +871,11 @@ textarea:focus-visible {
 .status-badge.ok {
   background: color-mix(in oklch, var(--ok) 16%, white);
   color: oklch(34% 0.12 150);
+}
+
+.status-badge.care {
+  background: color-mix(in oklch, var(--warn) 20%, white);
+  color: oklch(38% 0.11 82);
 }
 
 .status-badge.concern {
@@ -1152,6 +1225,10 @@ textarea:focus-visible {
     justify-self: start;
   }
 
+  .check-grid {
+    grid-template-columns: 1fr;
+  }
+
   .score-status {
     align-items: flex-start;
     flex-direction: column;
@@ -1483,6 +1560,29 @@ body.verax-theme::before {
   color: #1d5d38;
 }
 
+.verax-theme .status-badge.concern,
+.verax-theme .check-card.concern,
+.verax-theme .mini-score.concern {
+  border-color: rgba(224,107,116,.34);
+  background: rgba(224,107,116,.14);
+  color: #7c2430;
+}
+
+.verax-theme .status-badge.care,
+.verax-theme .check-card.care,
+.verax-theme .mini-score.care {
+  border-color: rgba(241,169,77,.4);
+  background: rgba(241,169,77,.16);
+  color: #6a4215;
+}
+
+.verax-theme .check-card.ok,
+.verax-theme .mini-score.ok {
+  border-color: rgba(105,209,143,.4);
+  background: rgba(105,209,143,.16);
+  color: #1d5d38;
+}
+
 .verax-theme .detail-grid {
   grid-template-columns: minmax(0, .92fr) minmax(320px, 1.08fr);
 }
@@ -1561,4 +1661,52 @@ body.verax-theme::before {
   .cover-actions {
     display: grid;
   }
+}
+
+/* Honest 3-state verdict: the orb ring + glyph reflect what we can actually
+   confirm. Verified = green, AI-disclosed = violet, altered = red, and the
+   common "could not confirm" = neutral grey (not an alarm). */
+.score-orb[data-verdict] {
+  background:
+    radial-gradient(circle, white 0 59%, transparent 60%),
+    conic-gradient(var(--verdict-ring, #cfd8dd) 0 100%);
+}
+.score-orb[data-verdict="verified"] { --verdict-ring: #69d18f; }
+.score-orb[data-verdict="ai"] { --verdict-ring: #a468e0; }
+.score-orb[data-verdict="altered"] { --verdict-ring: #e06b74; }
+.score-orb[data-verdict="likely-ai"] { --verdict-ring: #e0894d; }
+.score-orb[data-verdict="unproven"] { --verdict-ring: #b8c4cc; }
+
+.score-orb[data-verdict] strong {
+  font-size: clamp(40px, 6vw, 72px);
+  color: var(--verdict-ring, #2a3b47);
+}
+
+.verax-theme .score-orb[data-verdict] {
+  background:
+    radial-gradient(circle, rgba(247,251,252,.98) 0 56%, transparent 57%),
+    conic-gradient(var(--verdict-ring, #cfd8dd) 0 100%);
+}
+
+/* The verdict card is the primary statement; context sits visually beneath it. */
+.verdict-card {
+  border-width: 2px;
+  border-style: solid;
+}
+.verdict-card strong {
+  font-size: 18px;
+}
+.check-detail {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--muted);
+  word-break: break-word;
+}
+.context-divider {
+  margin: 18px 0 8px;
+  font-size: 12px;
+  font-weight: 780;
+  letter-spacing: .02em;
+  text-transform: uppercase;
+  color: var(--muted);
 }

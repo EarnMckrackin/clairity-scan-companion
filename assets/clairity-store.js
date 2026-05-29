@@ -125,6 +125,39 @@ export async function runScan(payload) {
   return data.result;
 }
 
+// Probe whether a third-party detector is configured on the server. Returns
+// false on any error so the opt-in UI simply stays hidden.
+export async function getDetectorConfig() {
+  try {
+    const response = await fetch(`${getApiBase()}/api/detect`, { method: 'GET' });
+    if (!response.ok) return { configured: false };
+    return await response.json();
+  } catch {
+    return { configured: false };
+  }
+}
+
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || '').replace(/^data:[^,]*,/, ''));
+    reader.onerror = () => reject(reader.error || new Error('Could not read file'));
+    reader.readAsDataURL(file);
+  });
+}
+
+// Send a file to the server-side detector proxy. The file leaves the device for
+// this call, so callers MUST obtain explicit user consent first.
+export async function detectMedia(file) {
+  const dataBase64 = await fileToBase64(file);
+  const response = await fetch(`${getApiBase()}/api/detect`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name: file.name, mime: file.type, dataBase64 })
+  });
+  return response.json().catch(() => ({ available: false, reason: 'bad-response' }));
+}
+
 export async function extractImageDimensions(file) {
   if (!file || !file.type.startsWith('image/')) return {};
   const url = URL.createObjectURL(file);

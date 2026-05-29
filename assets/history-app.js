@@ -26,6 +26,20 @@ function icon(type) {
   return 'IMG';
 }
 
+function toneClass(tone) {
+  if (tone === 'ok') return 'ok';
+  if (tone === 'care') return 'care';
+  if (tone === 'concern') return 'concern';
+  return '';
+}
+
+function toneLabel(tone, status) {
+  if (tone === 'ok') return 'Source-backed';
+  if (tone === 'care') return 'Check again';
+  if (tone === 'concern') return 'Warnings';
+  return status || 'Saved';
+}
+
 function matches(scan) {
   if (currentFilter === 'all') return true;
   if (currentFilter === 'care') return scan.tone === 'care';
@@ -44,10 +58,10 @@ function render() {
       <span class="media-icon">${icon(scan.type)}</span>
       <div>
         <span class="history-title">${escapeHtml(scan.label || readableType(scan.type))}</span>
-        <span class="history-meta">${escapeHtml(readableType(scan.type))} · ${escapeHtml(scan.status)} · ${escapeHtml(scan.summary)}</span>
+        <span class="history-meta">${escapeHtml(readableType(scan.type))} · ${escapeHtml(scan.review?.label || 'Built-in review')} · ${escapeHtml(scan.summary)}</span>
         <span class="history-meta">${new Date(scan.createdAt).toLocaleString()}</span>
       </div>
-      <span class="mini-score">${escapeHtml(scan.score)}</span>
+      <span class="mini-score ${toneClass(scan.tone)}">${escapeHtml(toneLabel(scan.tone, scan.status))}</span>
       <button class="secondary-btn compact-btn" type="button" data-delete="${escapeHtml(scan.id)}">Delete</button>
     </article>
   `).join('');

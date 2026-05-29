@@ -68,9 +68,9 @@ function clampScore(score) {
 }
 
 function statusFromScore(score) {
-  if (score >= 78) return { label: 'High anomaly', tone: 'concern' };
-  if (score >= 50) return { label: 'Review required', tone: 'care' };
-  return { label: 'Low anomaly', tone: 'ok' };
+  if (score >= 78) return { label: 'Stronger warning signals', tone: 'concern' };
+  if (score >= 50) return { label: 'Needs more checking', tone: 'care' };
+  return { label: 'Mostly source-backed', tone: 'ok' };
 }
 
 function evidence(label, weight, detail) {
@@ -79,6 +79,66 @@ function evidence(label, weight, detail) {
 
 function pageEvidence(category, label, weight, detail, sentiment = 'caution') {
   return { category, label, weight, detail, sentiment };
+}
+
+function check(key, label, status, detail, tone = 'care', source = 'verax') {
+  return { key, label, status, detail, tone, source };
+}
+
+function reviewMethod() {
+  return {
+    id: 'built-in-review',
+    label: 'Built-in review',
+    detail: 'Uses source clues, wording, and lightweight browser-side media heuristics. No trained forensic model, C2PA verifier, or SynthID check is connected in this build.'
+  };
+}
+
+function toneFromRisk(value, okAt, concernAt) {
+  if (value >= concernAt) return 'concern';
+  if (value <= okAt) return 'ok';
+  return 'care';
+}
+
+function toneFromStrength(value, careAt, okAt) {
+  if (value >= okAt) return 'ok';
+  if (value >= careAt) return 'care';
+  return 'concern';
+}
+
+function sourceContextCheck(hostType, parsed, metrics, fetchError = '') {
+  const tone = toneFromStrength(metrics.sourceConfidence, 45, 70);
+  const status = tone === 'ok'
+    ? 'Recognizable source context'
+    : tone === 'care'
+      ? 'Some source context'
+      : 'Weak source context';
+  const detail = [
+    `${parsed.hostname} looks like ${articleFor(hostType)} ${hostType}.`,
+    parsed.protocol === 'https:' ? 'HTTPS is present.' : 'HTTPS is not present.',
+    fetchError ? 'The page itself could not be read cleanly, so source context is carrying more of this result.' : ''
+  ].filter(Boolean).join(' ');
+  return check('source', 'Source context', status, detail, tone);
+}
+
+function provenanceCoverageCheck(type) {
+  const subject = type === 'url' ? 'page' : type === 'text' ? 'text sample' : 'file';
+  return check(
+    'provenance',
+    'Provenance / watermark',
+    'Not checked in this build',
+    `This ${subject} check does not yet verify C2PA, Content Credentials, SynthID, or other embedded provenance signals.`,
+    'care'
+  );
+}
+
+function detectorCoverageCheck(type, detail) {
+  return check(
+    'detector',
+    'Detector model',
+    type === 'image' ? 'Heuristic image review only' : 'Heuristic review only',
+    detail,
+    'care'
+  );
 }
 
 function lower(value) {
@@ -435,7 +495,10 @@ function summarizePageResult(status, profile, snapshot, parsed) {
 
 async function analyzeUrl(payload) {
   const input = String(payload.content || payload.url || '').trim();
-  const limitations = ['Webpage audits can miss content that appears only after login, paywalls, or heavy scripts.'];
+  const limitations = [
+    'Webpage audits can miss content that appears only after login, paywalls, or heavy scripts.',
+    'This build does not verify embedded provenance systems such as Content Credentials or SynthID.'
+  ];
 
   let parsed;
   try {
@@ -446,6 +509,11 @@ async function analyzeUrl(payload) {
       label: 'Invalid web link',
       score: 70,
       signals: [evidence('The link could not be read', 'High', 'Enter a full URL such as https://example.com/story.')],
+      checks: [
+        check('input', 'Link format', 'Link could not be parsed', 'Enter a full URL such as https://example.com/story.', 'concern'),
+        provenanceCoverageCheck('url'),
+        detectorCoverageCheck('url', 'Link checks rely on page/source clues. They do not use a trained image detector.')
+      ],
       nextStep: 'Paste a full webpage or social post link and audit again.',
       limitations
     });
@@ -458,12 +526,54 @@ async function analyzeUrl(payload) {
   const snapshot = fetched.snapshot;
   const profile = scorePageProfile(snapshot, parsed, fetched.error);
   const status = statusFromScore(profile.riskScore);
+  const sourceCheck = sourceContextCheck(profile.hostType, parsed, profile.metrics, fetched.error);
+  const contextTone = toneFromStrength(profile.metrics.contextCompleteness, 38, 62);
+  const claimTone = toneFromRisk(profile.metrics.contentRisk, 34, 58);
+  const mediaTone = toneFromRisk(profile.metrics.mediaRisk, 28, 52);
+  const checks = [
+    sourceCheck,
+    check(
+      'context',
+      'Page context',
+      contextTone === 'ok' ? 'Useful context found' : contextTone === 'care' ? 'Partial context found' : 'Thin context',
+      snapshot
+        ? [
+            snapshot.title && `Title: ${snapshot.title}.`,
+            snapshot.author && `Author: ${snapshot.author}.`,
+            snapshot.publishedTime && `Date: ${snapshot.publishedTime}.`,
+            snapshot.wordCount ? `${snapshot.wordCount} visible words sampled.` : ''
+          ].filter(Boolean).join(' ')
+        : 'The page content could not be sampled directly, so context is limited.',
+      contextTone
+    ),
+    check(
+      'claims',
+      'Claim language',
+      claimTone === 'ok' ? 'Low-pressure language' : claimTone === 'care' ? 'Mixed language cues' : 'Higher-pressure language',
+      claimTone === 'ok'
+        ? 'The visible text does not show strong urgency or reshare pressure.'
+        : 'The page language includes repost, urgency, or AI/synthetic-media cues that deserve a second look.',
+      claimTone
+    ),
+    check(
+      'media',
+      'Media on page',
+      mediaTone === 'ok' ? 'Light media footprint' : mediaTone === 'care' ? 'Some media needs follow-up' : 'Media-heavy page',
+      snapshot
+        ? `${snapshot.images.length} image(s) and ${snapshot.videoCount} video/player signal(s) were found on the page.`
+        : 'Without a readable snapshot, Verax could not inspect page media directly.',
+      mediaTone
+    ),
+    provenanceCoverageCheck('url'),
+    detectorCoverageCheck('url', 'This result comes from source and page-context checks, not a trained image or deepfake detector.')
+  ];
 
   return buildResult({
     type: 'url',
     label: snapshot?.title || fetched.metadata.title || parsed.hostname,
     score: profile.riskScore,
     signals: profile.signals,
+    checks,
     summary: summarizePageResult(status, profile, snapshot, parsed),
     nextStep: status.tone === 'ok'
       ? 'Use normal care: cite the page directly and verify any important claims with a second source.'
@@ -533,15 +643,52 @@ function analyzeText(payload) {
   const content = String(payload.content || '').slice(0, MAX_TEXT_LENGTH);
   const analysis = analyzeTextSignals(content);
   let score = 34 + analysis.scoreDelta;
+  const hasSourceLanguage = detectSourceLanguage(content);
+  const hasUrgency = detectUrgency(content);
+  const wordCount = content.trim().split(/\s+/).filter(Boolean).length;
+  const coverageTone = wordCount >= 35 ? 'ok' : wordCount >= 10 ? 'care' : 'concern';
+  const checks = [
+    check(
+      'source',
+      'Source clues',
+      hasSourceLanguage ? 'Some source wording found' : 'No clear source wording',
+      hasSourceLanguage
+        ? 'The text mentions attribution, publication, or source-like wording.'
+        : 'The sample does not clearly say where the claim came from.',
+      hasSourceLanguage ? 'ok' : 'concern'
+    ),
+    check(
+      'language',
+      'Claim language',
+      hasUrgency ? 'Urgent or pushy wording' : 'Lower-pressure wording',
+      hasUrgency
+        ? 'The sample pushes for speed, reacting quickly, or resharing before checking.'
+        : 'The wording is not strongly pressuring the reader to act fast.',
+      hasUrgency ? 'concern' : 'ok'
+    ),
+    check(
+      'coverage',
+      'Context coverage',
+      coverageTone === 'ok' ? 'Enough text to review' : coverageTone === 'care' ? 'Limited text sample' : 'Very little text',
+      `${wordCount} word${wordCount === 1 ? '' : 's'} sampled.`,
+      coverageTone
+    ),
+    provenanceCoverageCheck('text'),
+    detectorCoverageCheck('text', 'Text checks rely on wording and sourcing clues. They do not verify the underlying factual claim automatically.')
+  ];
 
   return buildResult({
     type: 'text',
     label: content.slice(0, 42) || 'Text audit',
     score,
     signals: analysis.signals,
+    checks,
     nextStep: 'Search for a dated source from a trusted outlet before sharing the claim.',
-    metadata: { length: content.length, words: content.trim().split(/\s+/).filter(Boolean).length },
-    limitations: ['Text audits check wording and source clues. They do not verify every factual claim.']
+    metadata: { length: content.length, words: wordCount },
+    limitations: [
+      'Text audits check wording and source clues. They do not verify every factual claim.',
+      'This build does not compare text against a fact-checking corpus or retrieval system.'
+    ]
   });
 }
 
@@ -583,39 +730,12 @@ function analyzeMedia(payload) {
     score += 3;
   }
 
-  if (mediaType === 'image' && media.visualStats) {
-    const visual = media.visualStats;
-    const hasStats = typeof visual.edgeDensity === 'number' && typeof visual.grayscaleRatio === 'number';
-    if (hasStats) {
-      signals.push(evidence('Image pixels checked locally', 'Low', 'Verax used aggregate texture and color statistics from your browser, not the raw image.'));
-      score -= 4;
-
-      if (visual.grayscaleRatio > 0.78 && visual.edgeDensity > 0.11 && visual.luminanceStd > 42) {
-        signals.push(evidence('Black-and-white photo texture', 'Low', 'The image has monochrome grain and contrast patterns that fit a digitized or archival photo.'));
-        score -= 18;
-      } else if (visual.grayscaleRatio > 0.78) {
-        signals.push(evidence('Mostly monochrome image', 'Low', 'Black-and-white images need source checks, but the color profile is not a synthetic-media warning by itself.'));
-        score -= 8;
-      }
-
-      if (visual.edgeDensity > 0.18 && visual.luminanceStd > 48) {
-        signals.push(evidence('Natural detail variation', 'Low', 'The audit found varied edges and texture rather than a uniformly smooth surface.'));
-        score -= 8;
-      }
-
-      if (visual.smoothness > 0.52 && visual.edgeDensity < 0.105 && visual.luminanceStd < 44) {
-        signals.push(evidence('Unusually smooth image texture', 'High', 'Large smooth areas with little edge variation can appear in generated or heavily edited images.'));
-        score += 18;
-      } else if (visual.smoothness > 0.46 && visual.edgeDensity < 0.13) {
-        signals.push(evidence('Soft texture pattern', 'Medium', 'The image has smoother texture than expected, so it deserves a second look.'));
-        score += 10;
-      }
-
-      if (visual.saturationMean > 0.36 && visual.highContrastDensity < 0.055) {
-        signals.push(evidence('Polished color profile', 'Medium', 'High color saturation with limited hard contrast can be a sign of stylized or generated media.'));
-        score += 8;
-      }
-    }
+  // Note: pixel texture/smoothness/saturation are NOT reliable indicators of AI
+  // generation — modern models produce realistic texture, and real photos can be
+  // smooth. We deliberately do not turn those stats into an AI guess. The real
+  // origin signal is the Content Credentials check that runs in the browser.
+  if (mediaType === 'image' && media.visualStats && typeof media.visualStats.edgeDensity === 'number') {
+    signals.push(evidence('Image opened locally', 'Low', 'Verax read basic image details in your browser. Pixel patterns alone cannot tell whether an image is AI-made.'));
   }
 
   if (media.lastModifiedAgeDays != null && media.lastModifiedAgeDays < 1) {
@@ -626,9 +746,9 @@ function analyzeMedia(payload) {
     signals.push(evidence('Screenshot rather than original file', 'Medium', 'Screenshots often remove source, camera, and provenance metadata.'));
     score += 8;
   }
-  if (/ai|generated|synthetic|deepfake|edited|final-v\d/i.test(media.name || '')) {
-    signals.push(evidence('Filename suggests generated or edited media', 'High', 'The filename includes terms such as AI, generated, synthetic, or edited.'));
-    score += 18;
+  if (/\bai\b|a\.i\.|generated|synthetic|deepfake|\bedited\b|midjourney|dall[\s.\-]?e|final-v\d/i.test(media.name || '')) {
+    signals.push(evidence('Filename mentions AI or editing', 'Low', 'The filename includes a word like AI, generated, or edited. That is just a name and is not proof either way — the Content Credentials check above is the reliable signal.'));
+    score += 4;
   }
   if (mediaType === 'audio') {
     signals.push(evidence('Audio requires voice confirmation', 'Medium', 'This MVP checks metadata only. Confirm sensitive voice messages through another channel.'));
@@ -639,25 +759,87 @@ function analyzeMedia(payload) {
     score += 7;
   }
 
+  const visual = media.visualStats || {};
+  const hasPixelReview = mediaType === 'image' && typeof visual.edgeDensity === 'number' && typeof visual.smoothness === 'number';
+  // File-context tone stays neutral: a filename or recency clue is context, not
+  // an AI verdict (that comes from the provenance check), so we never escalate to
+  // "concern" from a name alone.
+  const sourceTone = /screenshot|screen shot|screen-shot/i.test(media.name || '') || media.lastModifiedAgeDays < 1
+    ? 'care'
+    : 'ok';
+  const coverageTone = mediaType === 'image' && hasPixelReview ? 'ok' : mediaType === 'image' ? 'care' : 'concern';
+  const checks = [
+    check(
+      'source',
+      'File context',
+      sourceTone === 'ok' ? 'Neutral file context' : sourceTone === 'care' ? 'Limited file context' : 'Filename or recency raises questions',
+      [
+        media.name ? `Filename: ${media.name}.` : 'No filename was available.',
+        media.lastModifiedAgeDays != null ? `Last modified about ${media.lastModifiedAgeDays < 1 ? 'today' : `${Math.round(media.lastModifiedAgeDays)} day(s) ago`}.` : '',
+        media.source === 'screen-capture' ? 'This came from a live screen capture.' : ''
+      ].filter(Boolean).join(' '),
+      sourceTone
+    ),
+    check(
+      'visual',
+      mediaType === 'image' ? 'Image details' : 'Media details',
+      'Context only',
+      mediaType === 'image'
+        ? hasPixelReview
+          ? 'Verax read basic image details in your browser. This is background context, not an AI test — pixel patterns alone cannot confirm AI generation.'
+          : 'No image details were available.'
+        : mediaType === 'video'
+          ? 'Verax does not analyze video frames. The origin answer above comes from Content Credentials, if present.'
+          : 'Verax does not analyze audio. The origin answer above comes from Content Credentials, if present.',
+      'care'
+    ),
+    check(
+      'coverage',
+      'Check coverage',
+      coverageTone === 'ok' ? 'Local pixel review available' : coverageTone === 'care' ? 'Partial media review' : 'Metadata-only review',
+      mediaType === 'image'
+        ? hasPixelReview
+          ? 'The review used browser-side pixel statistics plus file metadata.'
+          : 'The review only had browser metadata and dimensions.'
+        : 'The review only had browser metadata. A stronger detector would need frame or audio analysis.',
+      coverageTone
+    ),
+    check(
+      'provenance',
+      'Provenance / Content Credentials',
+      'Checked privately in your browser',
+      'The origin result above comes from a Content Credentials (C2PA) check that runs on your device. SynthID and other vendor watermarks are not yet checked.',
+      'care'
+    ),
+    detectorCoverageCheck(mediaType, mediaType === 'image'
+      ? 'Beyond Content Credentials, this build has no trained AI-image detector. A no-credentials result means "unconfirmed", not "real".'
+      : 'Beyond Content Credentials, no dedicated deepfake model is connected for this media type yet.')
+  ];
+
   return buildResult({
     type: mediaType,
     label: media.name || `${mediaType} upload`,
     score,
     signals,
+    checks,
     nextStep: mediaType === 'audio'
       ? 'Confirm the message with the person through another channel.'
       : 'Look for the original post or source before sharing this media.',
     metadata: media,
-    limitations: [media.visualStats
-      ? 'Upload audits use local pixel statistics and metadata. They are useful clues, not a definitive AI detector.'
-      : 'Upload audits in this MVP use browser-provided metadata only; raw files are not stored server-side.']
+    limitations: [
+      'The origin result comes from a Content Credentials (C2PA) check in your browser; raw files are not uploaded.',
+      'Most media online carries no Content Credentials. When none are found, the result is "unconfirmed" — not proof that something is real or fake.',
+      'SynthID and other vendor watermarks, plus video frame and audio analysis, are not checked in this build.']
   });
 }
 
-function buildResult({ type, label, score, signals, summary, nextStep, metadata = {}, limitations = [] }) {
+function buildResult({ type, label, score, signals, checks = [], summary, nextStep, metadata = {}, limitations = [] }) {
   const normalizedSignals = signals.length
     ? signals
     : [evidence('No strong warning signs found', 'Low', 'The diagnostic audit did not find strong concern signals.')];
+  const normalizedChecks = checks.length
+    ? checks
+    : [detectorCoverageCheck(type, 'This result does not have a more detailed layered review yet.')];
   const finalScore = clampScore(score);
   const status = statusFromScore(finalScore);
 
@@ -669,10 +851,15 @@ function buildResult({ type, label, score, signals, summary, nextStep, metadata 
     score: finalScore,
     status: status.label,
     tone: status.tone,
+    review: reviewMethod(),
     summary: summary || summarizeSignals(normalizedSignals),
+    checks: normalizedChecks,
     evidence: normalizedSignals.slice(0, 6),
     nextStep,
-    metadata,
+    metadata: {
+      ...metadata,
+      internalRiskScore: finalScore
+    },
     limitations,
     privacy: {
       storedServerSide: false,
